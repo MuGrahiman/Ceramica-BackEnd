@@ -7,4 +7,6 @@ module.exports = {
 	MongoDB_CLUSTER: process.env.MONGODB_CLUSTER,
 	MongoDB_DB: process.env.MONGODB_DB,
 	JWT_SECRET: process.env.JWT_SECRET_KEY,
+	Admin_User : process.env.ADMIN_USER,
+	Admin_Password:process.env.ADMIN_PASSWORD,
 };

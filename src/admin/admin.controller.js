@@ -1,44 +1,36 @@
-const User = require('../users/user.model');
-const jwt = require('jsonwebtoken');
+const User = require("../users/user.model");
+const env = require("../configs/env.config");
+const { generateJWToken } = require( "../utilities/auth" );
 
+exports.Login = async (req, res) => {
+	try {
+		const { username, password } = req.body;
+		console.log("🚀 ~ exports.Login= ~ req.body:", req.body)
 
-const JWT_SECRET = process.env.JWT_SECRET_KEY
+		if (username !== env.Admin_User || password !== env.Admin_Password) {
+			return res.status(404).send({ message: "Invalid Credentials" });
+		}
 
-exports.login = async (req, res) => {
-    const {username, password} = req.body;
-    try {
-        const admin =  await User.findOne({username});
-        if(!admin) {
-            res.status(404).send({message: "Admin not found!"})
-        }
-        if(admin.password !== password) {
-            res.status(401).send({message: "Invalid password!"})
-        }
-        
-        const token =  jwt.sign(
-            {id: admin._id, username: admin.username, role: admin.role}, 
-            JWT_SECRET,
-            {expiresIn: "1h"}
-        )
+		const token = await generateJWToken({
+			id: env.Admin_User,
+			email: env.Admin_Password,
+			role: "admin",
+		});
 
-        return res.status(200).json({
-            message: "Authentication successful",
-            token: token,
-            user: {
-                username: admin.username,
-                role: admin.role
-            }
-        })
-        
-    } catch (error) {
-       console.error("Failed to login as admin", error)
-       res.status(401).send({message: "Failed to login as admin"}) 
-    }
-}
+		return res.status(200).json({
+			message: "Authentication successful",
+			token: token,
+		});
+
+	} catch (error) {
+		console.error("Failed to login as admin", error);
+		res.status(401).send({ message: "Failed to login as admin" });
+	}
+};
 
 // exports.register = register = async (req,res)=>{
 //     try {
-        
+
 //         const admin =  await User.create({
 //             "username": "admin",
 //             "password": "admin",
@@ -55,7 +47,7 @@ exports.login = async (req, res) => {
 //         })
 //     } catch (error) {
 //         console.log("🚀 ~ exports.register=register= ~ error:", error)
-        
+
 //     }
 
 // }
