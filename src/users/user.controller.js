@@ -26,7 +26,7 @@ exports.Register = async (req, res) => {
 		const hashedPassword = await doHash(password, 12);
 
 		// Create a new user instance
-		const newUser = new userModel({
+		const newUser = new userModel({  	
 			email,
 			password: hashedPassword,
 		});
@@ -117,13 +117,13 @@ exports.Register = async (req, res) => {
 // };
 
 /**
- * POST /sign-in
+ * POST /sign-in 
  * Login
  */
 exports.Login = async (req, res) => {
 	try {
-		const { email, password,uid, provider } = req.body;
-		console.log("🚀 ~ exports.Login= ~ req.body:", req.body)
+		const { email, password, uid, provider } = req.body;
+		console.log("🚀 ~ exports.Login= ~ req.body:", req.body);
 
 		// Check if the user exists
 		const existingUser = await userModel.findOne({ email });
@@ -132,8 +132,12 @@ exports.Login = async (req, res) => {
 		}
 
 		// Get current and existing provider data
-		const currentValue = providerSelector(provider, { password, guId:uid, fbId:uid });
-		console.log("🚀 ~ exports.Login= ~ currentValue:", currentValue)
+		const currentValue = providerSelector(provider, {
+			password,
+			guId: uid,
+			fbId: uid,
+		});
+		console.log("🚀 ~ exports.Login= ~ currentValue:", currentValue);
 		const existingProviderValue = providerSelector(provider, {
 			password: existingUser.password,
 			guId: existingUser.guId,
@@ -152,8 +156,15 @@ exports.Login = async (req, res) => {
 			}
 		} else {
 			// Update the user with new provider credentials
-			const property = providerSelector(provider, { password:'password', guId:'guId', fbId:'fbId' });
-			console.log("🚀 ~ exports.Login= ~ existingUser[property]:", existingUser[property])
+			const property = providerSelector(provider, {
+				password: "password",
+				guId: "guId",
+				fbId: "fbId",
+			});
+			console.log(
+				"🚀 ~ exports.Login= ~ existingUser[property]:",
+				existingUser[property]
+			);
 			existingUser[property] = await doHash(currentValue, 12); // Hash the new value
 			await existingUser.save();
 		}

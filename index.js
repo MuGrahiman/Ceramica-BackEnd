@@ -38,5 +38,5 @@ connectDB()
   .catch((err) => console.error(err));
 
 app.listen(env.Port, () => {
-  console.log(`Example app listening on port ${env.Port}`);
+  console.log(`Server listening on port ${env.Port}`);
 });
