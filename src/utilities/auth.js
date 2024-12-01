@@ -1,5 +1,5 @@
-const { hash, compare } = require("bcryptjs"); // Import bcryptjs functions
-const jwt = require("jsonwebtoken"); // Import jsonwebtoken functions
+const { hash, compare } = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const env = require("../configs/env.config");
 
 // Function to generate token
@@ -19,14 +19,15 @@ exports.verifyJWToken = (token) => {
 };
 
 // Function to hash a value
-exports.doHash = (value, saltValue) => hash(value, saltValue); // Hash the value with the specified salt
+exports.doHash = (value, saltValue) => hash(value, saltValue);
 
 // Function to validate a value against a hashed value
-exports.doHashValidation = (value, hashedValue) => compare(value, hashedValue); // Compare the plain value with the hashed value
+exports.doHashValidation = (value, hashedValue) => compare(value, hashedValue); 
 
 // Generate a random 4-digit verification code
 exports.generateOTP = () => {
     let otp = Math.floor(1000 + Math.random() * 9000).toString(); 
+    console.log("🚀 ~ otp:", otp)
     return otp;
 };
 

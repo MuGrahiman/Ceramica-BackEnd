@@ -10,7 +10,9 @@ const { sendMail } = require("../utilities/mailer");
 exports.Send = async (req, res) => {
 	try {
 		const { id } = req.params; //params:userId
+		console.log("🚀 ~ exports.Send= ~ id:", id)
 		const existingUser = await userModel.findById(id);
+		console.log("🚀 ~ exports.Send= ~ existingUser:", existingUser)
 
 		if (!existingUser) {
 			return res
@@ -18,11 +20,6 @@ exports.Send = async (req, res) => {
 				.json({ success: false, message: "User not found!" });
 		}
 
-		if (existingUser.status === "verified") {
-			return res
-				.status(401)
-				.json({ success: false, message: "User already exists!" });
-		}
 
 		if (existingUser.status === "blocked") {
 			return res.status(401).json({ success: false, message: "Admin Blocked" });
@@ -77,7 +74,6 @@ exports.Send = async (req, res) => {
  * Resend
  */
 exports.Resend = async (req, res) => {
-	// const { id } = req.body; //otpId
 	const { id } = req.params;
 	console.log("🚀 ~ exports.Resend= ~ id:", id);
 	try {
@@ -96,11 +92,7 @@ exports.Resend = async (req, res) => {
 				.json({ success: false, message: "User not found!" });
 		}
 
-		if (existingUser.status === "verified") {
-			return res
-				.status(401)
-				.json({ success: false, message: "User already verified!" });
-		}
+	 
 
 		if (existingUser.status === "blocked") {
 			return res.status(401).json({ success: false, message: "Admin Blocked" });
@@ -167,11 +159,7 @@ exports.Verify = async (req, res) => {
 		}
 
 		const existingUser = await userModel.findById(existingOTP.userId);
-		if (existingUser.status === "verified") {
-			return res
-				.status(401)
-				.json({ success: false, message: "User already verified!" });
-		}
+	 
 
 		if (existingUser.status === "blocked") {
 			return res.status(401).json({ success: false, message: "Admin Blocked" });
@@ -192,13 +180,8 @@ exports.Verify = async (req, res) => {
 				.json({ success: false, message: "OTP not matched!" });
 		}
 
-		(existingUser.status = "verified"), await existingUser.save();
-
-		// Generate JWT token
-		// const token = await generateJWToken({
-		// 	id: existingUser._id,
-		// 	email: existingUser.email,
-		// });
+		(existingUser.status = "verified")
+		 await existingUser.save();
 
 		return res.status(200).json({
 			success: true,

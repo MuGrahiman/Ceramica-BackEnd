@@ -37,9 +37,6 @@ exports.Register = async (req, res) => {
 			});
 		}
 
-		// let existUser = existingUser;
-
-		// if (!existingUser || existingUser.status !== "registered") {
 		const hashedPassword = await doHash(password, 12);
 
 		const newUser = new userModel({
@@ -57,29 +54,6 @@ exports.Register = async (req, res) => {
 			userId: result._id,
 		});
 
-		// const otp = await generateOTP();
-
-		// // Send the verification code via email
-		// const info = await sendMail(existUser, otp);
-
-		// // Check if the email was successfully sent
-		// if (info.accepted[0] !== existUser.email) {
-		// 	// If email sending fails, return 400 error
-		// 	res.status(400).json({ success: false, message: "Code sending failed!" });
-		// }
-
-		// const newOTP = new otpModel({
-		// 	userId: existUser._id,
-		// 	otp: otp,
-		// });
-
-		// await newOTP.save();
-
-		// return res.status(201).json({
-		// 	success: true,
-		// 	message: "Your account has been created successfully",
-		// 	otpId: newOTP._id,
-		// });
 	} catch (error) {
 		// Log any errors that occur
 		console.error(error);
@@ -162,6 +136,7 @@ exports.Login = async (req, res) => {
 			message: "Authentication successful",
 			token,
 		});
+
 	} catch (error) {
 		console.error("Error during login:", error);
 		return res
@@ -176,8 +151,10 @@ exports.Login = async (req, res) => {
  */
 exports.Forgotten = async (req, res) => {
 	const { email } = req.body;
+	console.log("🚀 ~ exports.Forgotten= ~ email:", email)
 	try {
 		const existingUser = await userModel.findOne({ email });
+		console.log("🚀 ~ exports.Forgotten= ~ existingUser:", existingUser)
 
 		if (!existingUser) {
 			return res
@@ -195,35 +172,13 @@ exports.Forgotten = async (req, res) => {
 			return res.status(401).json({ success: false, message: "Admin Blocked" });
 		}
 
-		return res.status(201).redirect(`otp/send/${existingUser._id}`);
+		return res.status(201).json({
+			success: true,
+			message: "User confirmed successfully",
+			userId: existingUser._id,
+		});
 
-		// // If OTP is still valid, generate a new one
-		// const newOtp = generateOTP();
-
-		// const newOTP = new otpModel({
-		// 	userId: existingUser._id,
-		// 	otp: otp,
-		// });
-
-		// // Save the updated OTP
-		// await newOTP.save();
-
-		// // Send the verification code via email
-		// const info = await sendMail(existingUser, newOtp);
-
-		// // Check if the email was successfully sent
-		// if (!info.accepted || !info.accepted.includes(existingUser.email)) {
-		// 	// If email sending fails, return 400 error
-		// 	return res
-		// 		.status(400)
-		// 		.json({ success: false, message: "Code sending failed!" });
-		// }
-
-		// return res.status(201).json({
-		// 	success: true,
-		// 	message: "Code send successfully",
-		// 	otpId: existingOTP._id,
-		// });
+		
 	} catch (error) {
 		// Log any errors that occur
 		console.error(error);
