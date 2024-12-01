@@ -2,44 +2,84 @@ const {
 	doHashValidation,
 	generateJWToken,
 	doHash,
+	generateOTP,
 } = require("../utilities/auth");
+const { sendMail } = require("../utilities/mailer");
 const { providerSelector } = require("../utilities/providerSelector");
 const userModel = require("./user.model");
+const otpModel = require("../otp/otp.model");
 
 /**
  * POST /sign-up
  * Register
  */
 exports.Register = async (req, res) => {
-	const { email, password } = req.body; // Destructure email and password from request body
+	const { email, password } = req.body;
 	try {
-		// Check if the user already exists
 		const existingUser = await userModel.findOne({ email });
-		if (existingUser) {
-			// If user exists, return error response
+		console.log("🚀 ~ exports.Register= ~ existingUser:", existingUser);
+
+		if (existingUser && existingUser.status === "verified") {
 			return res
 				.status(401)
 				.json({ success: false, message: "User already exists!" });
 		}
 
-		// Hash the password before saving
+		if (existingUser && existingUser.status === "blocked") {
+			return res.status(401).json({ success: false, message: "Admin Blocked" });
+		}
+
+		if (existingUser && existingUser.status === "registered") {
+			return res.status(201).json({
+				success: true,
+				message: "User registered successfully",
+				userId: existingUser._id,
+			});
+		}
+
+		// let existUser = existingUser;
+
+		// if (!existingUser || existingUser.status !== "registered") {
 		const hashedPassword = await doHash(password, 12);
 
-		// Create a new user instance
-		const newUser = new userModel({  	
+		const newUser = new userModel({
 			email,
 			password: hashedPassword,
+			status: "registered",
 		});
-		// Save the new user to the database
-		const result = await newUser.save();
-		result.password = undefined; // Exclude password from response
 
-		// Return success response
-		res.status(201).json({
+		const result = await newUser.save();
+		result.password = undefined;
+
+		return res.status(201).json({
 			success: true,
-			message: "Your account has been created successfully",
-			result,
+			message: "User registered successfully",
+			userId: result._id,
 		});
+
+		// const otp = await generateOTP();
+
+		// // Send the verification code via email
+		// const info = await sendMail(existUser, otp);
+
+		// // Check if the email was successfully sent
+		// if (info.accepted[0] !== existUser.email) {
+		// 	// If email sending fails, return 400 error
+		// 	res.status(400).json({ success: false, message: "Code sending failed!" });
+		// }
+
+		// const newOTP = new otpModel({
+		// 	userId: existUser._id,
+		// 	otp: otp,
+		// });
+
+		// await newOTP.save();
+
+		// return res.status(201).json({
+		// 	success: true,
+		// 	message: "Your account has been created successfully",
+		// 	otpId: newOTP._id,
+		// });
 	} catch (error) {
 		// Log any errors that occur
 		console.error(error);
@@ -47,77 +87,8 @@ exports.Register = async (req, res) => {
 	}
 };
 
-// exports.Login = async (req, res) => {
-// 	try {
-// 		const { email, password } = req.body;
-
-// 		const existingUser = await userModel.findOne({ email });
-// 		if (!existingUser) {
-// 			return res.status(404).send({ message: "User not found!" });
-// 		}
-
-// 		const Password = await doHashValidation(password, existingUser.password);
-// 		if (!Password) {
-// 			return res.status(401).send({ message: "Invalid password!" });
-// 		}
-
-// 		const token = await generateJWToken({
-// 			id: existingUser._id,
-// 			email: existingUser.email,
-// 			//   role: existingUser.role,
-// 		});
-
-// 		return res.status(200).json({
-// 			message: "Authentication successful",
-// 			token: token,
-// 		});
-// 	} catch (error) {
-// 		console.error("Failed to login as admin", error);
-// 		res.status(401).send({ message: "Failed to login as admin" });
-// 	}
-// };
-
-// exports.Register = async (req, res) => {
-// 	const { email, password, guId, fbId, provider } = req.body;
-// 	try {
-// 		// Check if the user already exists
-// 		const existingUser = await userModel.findOne({ email });
-// 		if (existingUser) {
-// 			// If user exists, return error response
-// 			return res
-// 				.status(401)
-// 				.json({ success: false, message: "User already exists!" });
-// 		}
-
-// 		const uid = providerSelector(provider, { password, guId, fbId });
-// 		// Hash the password before saving
-// 		const hashedId = await doHash(uid, 12);
-
-// 		// Create a new user instance
-// 		const newUser = new userModel({
-// 			email,
-// 			password: password ? hashedId : null,
-// 			guId: guId ? hashedId : null,
-// 			fbId: fbId ? hashedId : null,
-// 		});
-// 		// Save the new user to the database
-// 		const result = await newUser.save();
-
-// 		// Return success response
-// 		res.status(201).json({
-// 			success: true,
-// 			message: "Your account has been created successfully",
-// 			result,
-// 		});
-// 	} catch (error) {
-// 		// Log any errors that occur
-// 		console.error(error);
-// 		res.status(401).send({ message: "Failed to register " });
-// 	}
-// };
-
 /**
- * POST /sign-in 
+ * POST /sign-in
  * Login
  */
 exports.Login = async (req, res) => {
@@ -129,6 +100,16 @@ exports.Login = async (req, res) => {
 		const existingUser = await userModel.findOne({ email });
 		if (!existingUser) {
 			return res.status(404).json({ message: "User not found!" });
+		}
+
+		if (existingUser.status !== "verified") {
+			return res
+				.status(401)
+				.json({ success: false, message: "User not verified" });
+		}
+
+		if (existingUser.status === "blocked") {
+			return res.status(401).json({ success: false, message: "Admin Blocked" });
 		}
 
 		// Get current and existing provider data
@@ -151,6 +132,7 @@ exports.Login = async (req, res) => {
 				currentValue,
 				existingProviderValue
 			);
+
 			if (!isValid) {
 				return res.status(401).json({ message: "Invalid credentials!" });
 			}
@@ -185,5 +167,66 @@ exports.Login = async (req, res) => {
 		return res
 			.status(500)
 			.json({ success: false, message: "Failed to login." });
+	}
+};
+
+/**
+ * POST /forgotten
+ * Forgotten
+ */
+exports.Forgotten = async (req, res) => {
+	const { email } = req.body;
+	try {
+		const existingUser = await userModel.findOne({ email });
+
+		if (!existingUser) {
+			return res
+				.status(401)
+				.json({ success: false, message: "User is not found!" });
+		}
+
+		if (existingUser.status !== "verified") {
+			return res
+				.status(401)
+				.json({ success: false, message: "User is not verified!" });
+		}
+
+		if (existingUser.status === "blocked") {
+			return res.status(401).json({ success: false, message: "Admin Blocked" });
+		}
+
+		return res.status(201).redirect(`otp/send/${existingUser._id}`);
+
+		// // If OTP is still valid, generate a new one
+		// const newOtp = generateOTP();
+
+		// const newOTP = new otpModel({
+		// 	userId: existingUser._id,
+		// 	otp: otp,
+		// });
+
+		// // Save the updated OTP
+		// await newOTP.save();
+
+		// // Send the verification code via email
+		// const info = await sendMail(existingUser, newOtp);
+
+		// // Check if the email was successfully sent
+		// if (!info.accepted || !info.accepted.includes(existingUser.email)) {
+		// 	// If email sending fails, return 400 error
+		// 	return res
+		// 		.status(400)
+		// 		.json({ success: false, message: "Code sending failed!" });
+		// }
+
+		// return res.status(201).json({
+		// 	success: true,
+		// 	message: "Code send successfully",
+		// 	otpId: existingOTP._id,
+		// });
+	} catch (error) {
+		// Log any errors that occur
+		console.error(error);
+		res.status(401).send({ message: "Failed to send code " });
 	}
 };

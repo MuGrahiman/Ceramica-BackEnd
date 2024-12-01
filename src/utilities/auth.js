@@ -23,3 +23,12 @@ exports.doHash = (value, saltValue) => hash(value, saltValue); // Hash the value
 
 // Function to validate a value against a hashed value
 exports.doHashValidation = (value, hashedValue) => compare(value, hashedValue); // Compare the plain value with the hashed value
+
+// Generate a random 4-digit verification code
+exports.generateOTP = () => {
+    let otp = Math.floor(1000 + Math.random() * 9000).toString(); 
+    return otp;
+};
+
+// Function to validate OTP Expiry Date
+exports.isOTPExpired =(otp)=> new Date() - new Date(otp) > 5 * 60 * 1000;
