@@ -25,6 +25,7 @@ const orderRoutes = require("./src/orders/order.route");
 const otpRoutes = require("./src/otp/otp.route");
 const userRoutes = require("./src/users/user.route");
 const adminRoutes = require("./src/admin/admin.route");
+const inventoryRoutes = require("./src/inventory/inventory.route");
 const errorMiddleware = require( "./src/middlewares/errorMiddleware" );
 
 app.use("/api/books", bookRoutes);
@@ -32,8 +33,18 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/auth", userRoutes); 
 app.use("/api/admin", adminRoutes);
-app.use("/", (req, res) => res.send("Book Store Server is running!"));
+app.use("/api/inventory", inventoryRoutes);
+
+// Catch-all route for unmatched requests
+app.use((req, res, next) => {
+  const error = new Error("Not Found");
+  error.status = 404;
+  next(error);
+});
+
+// Error handling middleware
 app.use(errorMiddleware);
+app.use("/", (req, res) => res.send("Book Store Server is running!"));
 
 connectDB()
   .then(() => console.log("DataBase connected successfully!"))

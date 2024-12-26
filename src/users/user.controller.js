@@ -129,6 +129,7 @@ exports.Login = async (req, res) => {
 		const token = await generateJWToken({
 			id: existingUser._id,
 			email: existingUser.email,
+			role:'client'
 		});
 
 		return res.status(200).json({
