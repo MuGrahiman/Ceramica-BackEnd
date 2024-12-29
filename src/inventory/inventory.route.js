@@ -15,15 +15,15 @@ const router = express.Router();
 router.get( "/get", inventoryController.fetchInventory );
 
 // get single book endpoint
-router.get( "/get/:id", inventoryController.getSingleBook );
+router.get( "/get/:id", inventoryController.getSingleProduct );
 
 // post a book
 router.post( "/add", inventoryController.addToInventory )
 
 // update a book endpoint
-router.put( "/edit/:id", inventoryController.updateBook );
+router.put( "/edit/:id", inventoryController.updateProduct );
 
-router.delete( "/delete/:id", inventoryController.deleteABook )
+router.delete( "/delete/:id", inventoryController.deleteProduct )
 
 
 module.exports = router;  

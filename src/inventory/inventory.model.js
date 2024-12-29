@@ -47,6 +47,12 @@ const inventorySchema = new mongoose.Schema( {
         type: Number,
         required: true,
     },
+    // sku: {
+    //     type: String,
+    //     required: true,
+    //     unique: true, 
+    // },
+    status: { type: Boolean, required: true, default: true },
     coverImage: {
         public_id: {
             type: String,
@@ -83,7 +89,7 @@ const inventorySchema = new mongoose.Schema( {
 }, {
     timestamps: true,
 } );
-
+// SKU (Stock Keeping Unit)
 const Inventory = mongoose.model( 'Inventory', inventorySchema );
 
 module.exports = Inventory;

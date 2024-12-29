@@ -1,71 +1,97 @@
-const inventoryModel = require( "./inventory.model" );
+const inventoryService = require( "./inventory.service" );
 
 exports.addToInventory = async ( req, res ) => {
-    //* req.user === admin 
 
     try {
-        const newProduct = await inventoryModel( { ...req.body } );
-        await newProduct.save();
-        res.status( 200 ).json( { success: true, message: "Product added to inventory successfully", book: newProduct } )
+        const newProduct = await inventoryService.createProduct( { ...req.body } );
+        return res.status( 201 ).json( {
+            success: true,
+            message: "Product added to inventory successfully",
+            product: newProduct,
+        } );
     } catch ( error ) {
-        console.error( "Error creating book", error );
-        res.status( 500 ).json( { success: false, message: "Failed to create book" } )
+        console.error( "Error adding product to inventory", error );
+
+        return res.status( 500 ).json( {
+            success: false,
+            message: "Failed to add product to inventory. Please try again.",
+            error: error.message,
+        } );
     }
 }
 
 // get all books
 exports.fetchInventory = async ( req, res ) => {
-    const page = parseInt( req.query.page ) || 1; 
-    const limit = parseInt( req.query.limit ) || 10;
-    const skip = ( page - 1 ) * limit; 
-
+    // Query parameter validation TODO:make it as an helper
+    const page = Math.max( 1, parseInt( req.query.page, 10 ) || 1 ); // Ensure page is at least 1
+    const limit = Math.max( 1, parseInt( req.query.limit, 10 ) || 10 ); // Ensure limit is at least 1
+    const skip = ( page - 1 ) * limit;
     try {
-        const products = await inventoryModel
+        const products = await inventoryService
             .find()
             .sort( { createdAt: -1 } )
             .skip( skip )
             .limit( limit );
-        const count = await inventoryModel.countDocuments(); 
+        const count = await inventoryService.countDocuments();
 
         res.status( 200 ).json( {
             products,
-            totalPages: Math.ceil( count / limit ),
+            totalPages: Math.ceil( count / limit ),//TODO: Make it as helper in utility
             currentPage: page,
         } );
 
     } catch ( error ) {
-        console.error( "Error fetching books", error );
-        res.status( 500 ).json( { success: true, message: "Failed to fetch books" } )
+        console.error( "Error fetching products:", error );
+        res.status( 500 ).json( {
+            success: false,
+            message: "Failed to fetch products.",
+            error: error.message
+        } );
     }
 }
 
-exports.getSingleBook = async ( req, res ) => {
+// /controllers/inventory.controller.js
+exports.getSingleProduct = async ( req, res ) => {
     try {
         const { id } = req.params;
-        const book = await inventoryModel.findById( id );
-        if ( !book ) {
-            res.status( 404 ).json( { success: false, message: "Book not Found!" } )
+        const product = await inventoryService.getProductById( id );
+
+        // Return 404 if product is not found
+        if ( !product ) {
+            return res.status( 404 ).json( { success: false, message: "Product not found!" } );
         }
-        res.status( 200 ).json( book )
+
+
+        // Successfully found the product
+        return res.status( 200 ).json( { success: true, product } );
 
     } catch ( error ) {
-        console.error( "Error fetching book", error );
-        res.status( 500 ).json( { success: false, message: "Failed to fetch book" } )
+        console.error( `Error fetching product with ID ${ req.params.id }:`, error );
+        if ( error.message === "Invalid product ID format" ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: error.message
+            } );
+        }
+        return res.status( 500 ).json( {
+            success: false,
+            message: "Failed to fetch product."
+        } );
     }
+};
 
-}
 
 // update book data
-exports.updateBook = async ( req, res ) => {
+exports.updateProduct = async ( req, res ) => {
     const { id } = req.params;
+    const newData = req.body;
 
-    const { newData } = req.body
     try {
         // Attempt to update the book in the inventory
-        const updatedBook = await inventoryModel.findByIdAndUpdate( id, newData, { new: true } );
+        const updatedProduct = await inventoryService.updateProductById( id, newData );
 
         // If the book is not found, return a 404 error
-        if ( !updatedBook ) {
+        if ( !updatedProduct ) {
             return res.status( 404 ).json( {
                 success: false,
                 message: "Product not found."
@@ -75,35 +101,54 @@ exports.updateBook = async ( req, res ) => {
         // Return success response with updated book details
         return res.status( 200 ).json( {
             success: true,
-            message: "Book updated successfully.",
-            book: updatedBook
+            message: "Product updated successfully.",
+            product: updatedProduct // Change from book to product
         } );
     } catch ( error ) {
-        console.error( "Error updating book:", error );
+        console.error( `Error updating product with ID ${ id }:`, error );
 
-        // Return a 500 error for any unexpected issues
+        if ( error.message === "Invalid product ID format" ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: error.message
+            } );
+        }
+
         return res.status( 500 ).json( {
             success: false,
-            message: "Failed to update the book."
+            message: "Failed to update the product."
         } );
     }
 };
 
-
-exports.deleteABook = async ( req, res ) => {
+exports.deleteProduct = async ( req, res ) => {
     try {
         const { id } = req.params;
-        const deletedBook = await inventoryModel.findByIdAndDelete( id );
-        if ( !deletedBook ) {
-            return res.status( 404 ).json( { success: false, message: "Book is not Found!" } )
+
+        const deletedProduct = await inventoryService.deleteProductById( id );
+
+        if ( !deletedProduct ) {
+            return res.status( 404 ).json( { success: false, message: "Product not found!" } );
         }
+
         return res.status( 200 ).json( {
             success: true,
-            message: "Book deleted successfully",
-            book: deletedBook
-        } )
+            message: "Product deleted successfully",
+            product: deletedProduct // Change from book to product
+        } );
     } catch ( error ) {
-        console.error( "Error deleting a book", error );
-        return res.status( 500 ).json( { success: false, message: "Failed to delete a book" } )
+        console.error( `Error deleting product with ID ${ req.params.id }:`, error );
+
+        if ( error.message === "Invalid product ID format" ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: error.message
+            } );
+        }
+
+        return res.status( 500 ).json( {
+            success: false,
+            message: "Failed to delete the product."
+        } );
     }
 };
