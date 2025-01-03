@@ -21,7 +21,9 @@ router.get( "/get/:id", inventoryController.getSingleProduct );
 router.post( "/add", inventoryController.addToInventory )
 
 // update a book endpoint
-router.put( "/edit/:id", inventoryController.updateProduct );
+router.route( "/edit/:id" )
+    .put( inventoryController.updateProduct )  // Handles PUT requests
+    .patch( inventoryController.updateProduct ); // Handles PATCH requests
 
 router.delete( "/delete/:id", inventoryController.deleteProduct )
 

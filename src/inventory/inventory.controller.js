@@ -23,20 +23,62 @@ exports.addToInventory = async ( req, res ) => {
 // get all books
 exports.fetchInventory = async ( req, res ) => {
     // Query parameter validation TODO:make it as an helper
-    const page = Math.max( 1, parseInt( req.query.page, 10 ) || 1 ); // Ensure page is at least 1
-    const limit = Math.max( 1, parseInt( req.query.limit, 10 ) || 10 ); // Ensure limit is at least 1
+    const {
+        page: queryPage,
+        limit: queryLimit,
+        search: searchTerm,
+        minPrice, maxPrice,
+        category, size, sort
+    } = req.query
+    const page = Math.max( 1, parseInt( queryPage, 10 ) || 1 ); // Ensure page is at least 1
+    const limit = Math.max( 1, parseInt( queryLimit, 10 ) || 10 ); // Ensure limit is at least 1
     const skip = ( page - 1 ) * limit;
+    const search = searchTerm ? {
+        $or: [
+            { title: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive searchTerm
+            { category: { $regex: searchTerm, $options: 'i' } },
+            { size: { $regex: searchTerm, $options: 'i' } },
+        ]
+    } : {};
+    
+    const filters = {}
+    // Handle category filter
+    if ( category && category.length ) {
+        filters.category = Array.isArray( category ) ? { $in: category } : category;
+    }
+    // Handle size filter
+    if ( size && size.length ) {
+        filters.size = Array.isArray( size ) ? { $in: size } : size;
+    }
+    // Handle price range filter
+    if ( minPrice || maxPrice ) {
+        filters.price = {};
+        if ( minPrice ) filters.price.$gte = Number( minPrice );
+        if ( maxPrice ) filters.price.$lte = Number( maxPrice );
+    }
+    let sortOptions = {};
+    switch ( sort ) {
+        case 'newest':
+            sortOptions = { createdAt: -1 }; // Assuming you have a createdAt field
+            break;
+        case 'oldest':
+            sortOptions = { createdAt: 1 };
+            break;
+        case 'price_desc':
+            sortOptions = { price: -1 }; // Assuming you have a price field
+            break;
+        case 'price_asc':
+            sortOptions = { price: 1 };
+            break;
+        default:
+            sortOptions = {}; // Default sorting (if needed)
+            break;
+    }
     try {
-        const products = await inventoryService
-            .find()
-            .sort( { createdAt: -1 } )
-            .skip( skip )
-            .limit( limit );
-        const count = await inventoryService.countDocuments();
-
+        const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions,search )
         res.status( 200 ).json( {
-            products,
-            totalPages: Math.ceil( count / limit ),//TODO: Make it as helper in utility
+            products: products.products,
+            totalPages: Math.ceil( products.count / limit ),//TODO: Make it as helper in utility
             currentPage: page,
         } );
 
@@ -85,7 +127,6 @@ exports.getSingleProduct = async ( req, res ) => {
 exports.updateProduct = async ( req, res ) => {
     const { id } = req.params;
     const newData = req.body;
-
     try {
         // Attempt to update the book in the inventory
         const updatedProduct = await inventoryService.updateProductById( id, newData );

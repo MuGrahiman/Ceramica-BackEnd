@@ -11,15 +11,15 @@ class InventoryService {
     }
 
     // Added fetchProducts method that includes filtering and sorting
-    static async fetchProducts ( page, limit, filters = {}, sort = { createdAt: -1 } ) {
+    static async fetchProducts ( page, limit, filters = {}, sort = { createdAt: -1 }, search = {} ) {
         const skip = ( page - 1 ) * limit;
-        // const { skip } = paginate( page, limit );/
-        const products = await inventoryModel.find( filters )
+        const filterOptions = { ...filters, ...search }
+        const products = await inventoryModel.find( filterOptions )
             .sort( sort )
             .skip( skip )
             .limit( limit );
 
-        const count = await inventoryModel.countDocuments( filters ); // Count filtered documents
+        const count = await inventoryModel.countDocuments( filterOptions ); // Count filtered documents
 
         return { products, count };
     }
@@ -37,7 +37,6 @@ class InventoryService {
         }
         return await inventoryModel.findByIdAndUpdate( id, newData, { new: true } );
     }
-
 
     static async deleteProductById ( id ) {
         if ( !mongoose.Types.ObjectId.isValid( id ) ) {

@@ -47,11 +47,6 @@ const inventorySchema = new mongoose.Schema( {
         type: Number,
         required: true,
     },
-    // sku: {
-    //     type: String,
-    //     required: true,
-    //     unique: true, 
-    // },
     status: { type: Boolean, required: true, default: true },
     coverImage: {
         public_id: {
