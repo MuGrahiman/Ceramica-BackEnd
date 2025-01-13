@@ -40,7 +40,7 @@ exports.fetchInventory = async ( req, res ) => {
             { size: { $regex: searchTerm, $options: 'i' } },
         ]
     } : {};
-    
+
     const filters = {}
     // Handle category filter
     if ( category && category.length ) {
@@ -75,9 +75,10 @@ exports.fetchInventory = async ( req, res ) => {
             break;
     }
     try {
-        const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions,search )
+        const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions, search )
         res.status( 200 ).json( {
             products: products.products,
+            totalProducts: products.count,
             totalPages: Math.ceil( products.count / limit ),//TODO: Make it as helper in utility
             currentPage: page,
         } );

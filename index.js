@@ -26,6 +26,7 @@ app.use( express.json() );
 
 // Route Imports
 const bookRoutes = require( "./src/books/book.route" );
+const cartRoutes = require( "./src/cart/cart.route" );
 const orderRoutes = require( "./src/orders/order.route" );
 const otpRoutes = require( "./src/otp/otp.route" );
 const userRoutes = require( "./src/users/user.route" );
@@ -40,6 +41,8 @@ app.use( "/api/otp", otpRoutes );
 app.use( "/api/auth", userRoutes );
 app.use( "/api/admin", adminRoutes );
 app.use( "/api/inventory", inventoryRoutes );
+app.use( '/api/cart', cartRoutes );
+// app.use('/api/wishlist', wishlistRoutes);
 
 // Catch-all route for unmatched requests
 app.use( ( req, res, next ) => {
