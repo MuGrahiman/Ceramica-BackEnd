@@ -1,6 +1,6 @@
 const express = require( 'express' );
 const cartController = require('./cart.controller');
-const verifyAdminToken = require( '../middlewares/verifyToken' );
+const verifyToken = require( '../middlewares/verifyToken' );
 const router = express.Router();
 
 router.get('/:user_id', cartController.getCart);

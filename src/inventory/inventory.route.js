@@ -1,31 +1,22 @@
 const express = require( 'express' );
-const Book = require( './inventory.model' );
 const inventoryController = require( './inventory.controller' );
-const verifyAdminToken = require( '../middlewares/verifyToken' );
+const verifyToken = require( '../middlewares/verifyToken' );
+const verifyAdmin = require( '../middlewares/verifyAdmin' );
+
 const router = express.Router();
 
-/**
- * Need to create an helper function for checking the user is admin or not . 
- * 
- * Create the helper for check the body values by creating schema
- * 
- */
 
-// get all books
+// Allow GET requests without admin check
 router.get( "/get", inventoryController.fetchInventory );
-
-// get single book endpoint
 router.get( "/get/:id", inventoryController.getSingleProduct );
 
-// post a book
-router.post( "/add", inventoryController.addToInventory )
+// Admin only routes
+router.use( verifyToken, verifyAdmin );
 
-// update a book endpoint
+router.post( "/add", inventoryController.addToInventory );
 router.route( "/edit/:id" )
-    .put( inventoryController.updateProduct )  // Handles PUT requests
-    .patch( inventoryController.updateProduct ); // Handles PATCH requests
+    .patch( inventoryController.updateProduct )
+    .put( inventoryController.updateProduct )
+router.delete( "/delete/:id", inventoryController.deleteProduct );
 
-router.delete( "/delete/:id", inventoryController.deleteProduct )
-
-
-module.exports = router;  
+module.exports = router;

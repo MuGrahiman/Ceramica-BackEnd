@@ -191,6 +191,6 @@ exports.Verify = async (req, res) => {
 	} catch (error) {
 		// Log any errors that occur
 		console.error(error);
-		res.status(401).send({ message: "Failed to send code " });
+		res.status(401).send({ message: error.message });
 	}
 };

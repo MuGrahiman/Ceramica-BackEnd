@@ -1,6 +1,7 @@
 const inventoryService = require( "./inventory.service" );
 
 exports.addToInventory = async ( req, res ) => {
+console.log("🚀 ~ exports.addToInventory= ~ req:", req.body)
 
     try {
         const newProduct = await inventoryService.createProduct( { ...req.body } );
@@ -76,7 +77,7 @@ exports.fetchInventory = async ( req, res ) => {
     }
     try {
         const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions, search )
-        res.status( 200 ).json( {
+        return res.status( 200 ).json( {
             products: products.products,
             totalProducts: products.count,
             totalPages: Math.ceil( products.count / limit ),//TODO: Make it as helper in utility
@@ -85,7 +86,7 @@ exports.fetchInventory = async ( req, res ) => {
 
     } catch ( error ) {
         console.error( "Error fetching products:", error );
-        res.status( 500 ).json( {
+        return res.status( 500 ).json( {
             success: false,
             message: "Failed to fetch products.",
             error: error.message
@@ -128,6 +129,7 @@ exports.getSingleProduct = async ( req, res ) => {
 exports.updateProduct = async ( req, res ) => {
     const { id } = req.params;
     const newData = req.body;
+    console.log("🚀 ~ exports.updateProduct= ~ newData:", newData)
     try {
         // Attempt to update the book in the inventory
         const updatedProduct = await inventoryService.updateProductById( id, newData );
