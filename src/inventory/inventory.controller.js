@@ -1,8 +1,6 @@
 const inventoryService = require( "./inventory.service" );
 
 exports.addToInventory = async ( req, res ) => {
-console.log("🚀 ~ exports.addToInventory= ~ req:", req.body)
-
     try {
         const newProduct = await inventoryService.createProduct( { ...req.body } );
         return res.status( 201 ).json( {
@@ -129,7 +127,6 @@ exports.getSingleProduct = async ( req, res ) => {
 exports.updateProduct = async ( req, res ) => {
     const { id } = req.params;
     const newData = req.body;
-    console.log("🚀 ~ exports.updateProduct= ~ newData:", newData)
     try {
         // Attempt to update the book in the inventory
         const updatedProduct = await inventoryService.updateProductById( id, newData );

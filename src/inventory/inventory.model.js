@@ -47,7 +47,12 @@ const inventorySchema = new mongoose.Schema( {
         type: Number,
         required: true,
     },
-    status: { type: Boolean, required: true, default: true },
+    status: {
+        type: String,
+        required: true,
+        enum: [ "active", "inactive" ],
+        default: 'active'
+    },
     coverImage: {
         public_id: {
             type: String,
