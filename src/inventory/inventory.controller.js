@@ -1,195 +1,128 @@
+// controllers/inventory.controller.js
+const { NotFoundError } = require( "../errors/customErrors" );
+const { sendSuccessResponse } = require( "../utilities/responses" );
 const inventoryService = require( "./inventory.service" );
 
+// Add product to inventory
 exports.addToInventory = async ( req, res ) => {
-    try {
-        const newProduct = await inventoryService.createProduct( { ...req.body } );
-        return res.status( 201 ).json( {
-            success: true,
-            message: "Product added to inventory successfully",
-            product: newProduct,
-        } );
-    } catch ( error ) {
-        console.error( "Error adding product to inventory", error );
-
-        return res.status( 500 ).json( {
-            success: false,
-            message: "Failed to add product to inventory. Please try again.",
-            error: error.message,
-        } );
+    const productData = req.body; // TODO: Validate the body
+    const newProduct = await inventoryService.createProduct( { ...productData } );
+    if ( !newProduct ) {
+        throw new NotFoundError( "Failed to add product to inventory" );
     }
-}
 
-// get all books
+    sendSuccessResponse( res, {
+        statusCode: 201,
+        message: "Product added to inventory successfully",
+        data: newProduct,
+    } );
+};
+
+// Fetch all products
 exports.fetchInventory = async ( req, res ) => {
-    // Query parameter validation TODO:make it as an helper
     const {
         page: queryPage,
         limit: queryLimit,
         search: searchTerm,
-        minPrice, maxPrice,
-        category, size, sort
-    } = req.query
-    const page = Math.max( 1, parseInt( queryPage, 10 ) || 1 ); // Ensure page is at least 1
-    const limit = Math.max( 1, parseInt( queryLimit, 10 ) || 10 ); // Ensure limit is at least 1
-    const skip = ( page - 1 ) * limit;
-    const search = searchTerm ? {
-        $or: [
-            { title: { $regex: searchTerm, $options: 'i' } }, // Case-insensitive searchTerm
-            { category: { $regex: searchTerm, $options: 'i' } },
-            { size: { $regex: searchTerm, $options: 'i' } },
-        ]
-    } : {};
+        minPrice,
+        maxPrice,
+        category,
+        size,
+        sort,
+    } = req.query;
 
-    const filters = {}
-    // Handle category filter
+    const page = Math.max( 1, parseInt( queryPage, 10 ) || 1 );
+    const limit = Math.max( 1, parseInt( queryLimit, 10 ) || 10 );
+    const skip = ( page - 1 ) * limit;
+
+    const search = searchTerm
+        ? {
+            $or: [
+                { title: { $regex: searchTerm, $options: "i" } },
+                { category: { $regex: searchTerm, $options: "i" } },
+                { size: { $regex: searchTerm, $options: "i" } },
+            ],
+        }
+        : {};
+
+    const filters = {};
     if ( category && category.length ) {
         filters.category = Array.isArray( category ) ? { $in: category } : category;
     }
-    // Handle size filter
     if ( size && size.length ) {
         filters.size = Array.isArray( size ) ? { $in: size } : size;
     }
-    // Handle price range filter
     if ( minPrice || maxPrice ) {
         filters.price = {};
         if ( minPrice ) filters.price.$gte = Number( minPrice );
         if ( maxPrice ) filters.price.$lte = Number( maxPrice );
     }
-    let sortOptions = {};
+
+    let sortOptions = { createdAt: -1 }; // Default sorting
     switch ( sort ) {
-        case 'newest':
-            sortOptions = { createdAt: -1 }; // Assuming you have a createdAt field
+        case "newest":
+            sortOptions = { createdAt: -1 };
             break;
-        case 'oldest':
+        case "oldest":
             sortOptions = { createdAt: 1 };
             break;
-        case 'price_desc':
-            sortOptions = { price: -1 }; // Assuming you have a price field
+        case "price_desc":
+            sortOptions = { price: -1 };
             break;
-        case 'price_asc':
+        case "price_asc":
             sortOptions = { price: 1 };
             break;
-        default:
-            sortOptions = {}; // Default sorting (if needed)
-            break;
     }
-    try {
-        const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions, search )
-        return res.status( 200 ).json( {
+
+    const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions, search );
+    sendSuccessResponse( res, {
+        data: {
             products: products.products,
             totalProducts: products.count,
-            totalPages: Math.ceil( products.count / limit ),//TODO: Make it as helper in utility
+            totalPages: Math.ceil( products.count / limit ),
             currentPage: page,
-        } );
-
-    } catch ( error ) {
-        console.error( "Error fetching products:", error );
-        return res.status( 500 ).json( {
-            success: false,
-            message: "Failed to fetch products.",
-            error: error.message
-        } );
-    }
-}
-
-// /controllers/inventory.controller.js
-exports.getSingleProduct = async ( req, res ) => {
-    try {
-        const { id } = req.params;
-        const product = await inventoryService.getProductById( id );
-
-        // Return 404 if product is not found
-        if ( !product ) {
-            return res.status( 404 ).json( { success: false, message: "Product not found!" } );
-        }
-
-
-        // Successfully found the product
-        return res.status( 200 ).json( { success: true, product } );
-
-    } catch ( error ) {
-        console.error( `Error fetching product with ID ${ req.params.id }:`, error );
-        if ( error.message === "Invalid product ID format" ) {
-            return res.status( 400 ).json( {
-                success: false,
-                message: error.message
-            } );
-        }
-        return res.status( 500 ).json( {
-            success: false,
-            message: "Failed to fetch product."
-        } );
-    }
+        },
+    } );
 };
 
+// Get single product by ID
+exports.getSingleProduct = async ( req, res ) => {
+    const { id } = req.params;
+    const product = await inventoryService.getProductById( id );
 
-// update book data
+    if ( !product ) {
+        throw new NotFoundError( "Product not found!" );
+    }
+
+    sendSuccessResponse( res, { data: product } );
+};
+
+// Update product by ID
 exports.updateProduct = async ( req, res ) => {
     const { id } = req.params;
-    const newData = req.body;
-    try {
-        // Attempt to update the book in the inventory
-        const updatedProduct = await inventoryService.updateProductById( id, newData );
-
-        // If the book is not found, return a 404 error
-        if ( !updatedProduct ) {
-            return res.status( 404 ).json( {
-                success: false,
-                message: "Product not found."
-            } );
-        }
-
-        // Return success response with updated book details
-        return res.status( 200 ).json( {
-            success: true,
-            message: "Product updated successfully.",
-            product: updatedProduct // Change from book to product
-        } );
-    } catch ( error ) {
-        console.error( `Error updating product with ID ${ id }:`, error );
-
-        if ( error.message === "Invalid product ID format" ) {
-            return res.status( 400 ).json( {
-                success: false,
-                message: error.message
-            } );
-        }
-
-        return res.status( 500 ).json( {
-            success: false,
-            message: "Failed to update the product."
-        } );
+    const { newData } = req.body; // TODO: Validate the data
+    const updatedProduct = await inventoryService.updateProductById( id, newData );
+    if ( !updatedProduct ) {
+        throw new NotFoundError( "Product not found!" );
     }
+
+    sendSuccessResponse( res, {
+        message: "Product updated successfully.",
+        data: updatedProduct,
+    } );
 };
 
+// Delete product by ID
 exports.deleteProduct = async ( req, res ) => {
-    try {
-        const { id } = req.params;
+    const { id } = req.params;
+    const deletedProduct = await inventoryService.deleteProductById( id );
 
-        const deletedProduct = await inventoryService.deleteProductById( id );
-
-        if ( !deletedProduct ) {
-            return res.status( 404 ).json( { success: false, message: "Product not found!" } );
-        }
-
-        return res.status( 200 ).json( {
-            success: true,
-            message: "Product deleted successfully",
-            product: deletedProduct // Change from book to product
-        } );
-    } catch ( error ) {
-        console.error( `Error deleting product with ID ${ req.params.id }:`, error );
-
-        if ( error.message === "Invalid product ID format" ) {
-            return res.status( 400 ).json( {
-                success: false,
-                message: error.message
-            } );
-        }
-
-        return res.status( 500 ).json( {
-            success: false,
-            message: "Failed to delete the product."
-        } );
+    if ( !deletedProduct ) {
+        throw new NotFoundError( "Product not found!" );
     }
+
+    sendSuccessResponse( res, {
+        message: "Product deleted successfully",
+        data: deletedProduct,
+    } );
 };

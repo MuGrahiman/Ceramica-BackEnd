@@ -1,0 +1,55 @@
+// errors/customErrors.js
+
+// Base class for custom errors
+class CustomError extends Error {
+    constructor(message, statusCode, name) {
+        super(message);
+        this.statusCode = statusCode; // HTTP status code associated with the error
+        this.name = name; // Name of the error for identification
+        this.success = false; // Indicates that an error occurred
+    }
+}
+
+// ValidationError: The provided data fails validation rules
+class ValidationError extends CustomError {
+    constructor(message = "Validation Error") {
+        super(message, 400, "ValidationError");
+    }
+}
+
+// UnauthorizedError: The request requires user authentication
+class UnauthorizedError extends CustomError {
+    constructor(message = "Unauthorized") {
+        super(message, 401, "UnauthorizedError");
+    }
+}
+
+// NotFoundError: The requested resource could not be found
+class NotFoundError extends CustomError {
+    constructor(message = "Not Found") {
+        super(message, 404, "NotFoundError");
+    }
+}
+
+// InternalServerError: The server encountered an unexpected condition
+class InternalServerError extends CustomError {
+    constructor(message = "Internal Server Error") {
+        super(message, 500, "InternalServerError");
+    }
+}
+
+//ForbiddenError:The user is authenticated but doesn’t have the required permissions 
+class ForbiddenError extends CustomError {
+    constructor(message = "Forbidden") {
+        super(message, 403, "ForbiddenError");
+    }
+}
+
+module.exports = {
+    CustomError,
+    ValidationError,
+    UnauthorizedError,
+    NotFoundError,
+    InternalServerError,
+    ForbiddenError,
+};

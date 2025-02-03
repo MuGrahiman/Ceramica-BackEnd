@@ -1,11 +1,11 @@
+// middlewares/verifyAdmin.js
+const { UnauthorizedError } = require( "../errors/customErrors" );
 
-
-
-const verifyAdmin = ( req, res, next ) => req.user.role !== "admin" ?
-    res.status( 403 ).json( {
-        success: false,
-        message: "Access Denied. Admin privileges required."
-    } ) : next();
-
+const verifyAdmin = ( req, res, next ) => {
+    if ( req.user.role !== "admin" ) {
+        throw new UnauthorizedError( "Access Denied. Admin privileges required." );
+    }
+   return next();
+};
 
 module.exports = verifyAdmin;

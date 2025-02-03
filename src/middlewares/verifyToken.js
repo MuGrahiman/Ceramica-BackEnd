@@ -1,12 +1,14 @@
+// middlewares/verifyToken.js
 const { verifyJWToken } = require( "../utilities/auth" );
 const userModel = require( "../users/user.model" );
+const { UnauthorizedError, NotFoundError } = require( "../errors/customErrors" );
 
 const verifyToken = async ( req, res, next ) => {
-    const authorizationHeader = req.headers[ 'authorization' ];
-    const token = authorizationHeader && authorizationHeader.split( ' ' )[ 1 ];
+    const authorizationHeader = req.headers[ "authorization" ];
+    const token = authorizationHeader && authorizationHeader.split( " " )[ 1 ];
 
     if ( !token ) {
-        return res.status( 401 ).json( { success: false, message: 'Access Denied. No token provided.' } );
+        return next( new UnauthorizedError( "Access Denied. No token provided." ) );
     }
 
     try {
@@ -14,7 +16,7 @@ const verifyToken = async ( req, res, next ) => {
         const user = await userModel.findById( data.id );
 
         if ( !user ) {
-            return res.status( 404 ).json( { success: false, message: "User not found." } );
+            return next( new UnauthorizedError( "User not found." ) );
         }
 
         req.user = user;
@@ -22,12 +24,8 @@ const verifyToken = async ( req, res, next ) => {
     } catch ( err ) {
         console.error( "Token verification error:", err );
 
-        if ( err.name === "TokenExpiredError" ) {
-            return res.status( 401 ).json( { success: false, message: "Token expired. Please log in again." } );
-        }
-
-        return res.status( 403 ).json( { success: false, message: 'Invalid credentials.' } );
+        return next( err );
     }
-}; 
+};
 
-module.exports = verifyToken;      
+module.exports = verifyToken;
