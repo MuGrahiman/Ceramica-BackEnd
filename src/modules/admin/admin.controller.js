@@ -1,5 +1,5 @@
 const User = require( "../users/user.model" );
-const { generateJWToken, doHashValidation } = require( "../utilities/auth" );
+const { generateJWToken, doHashValidation } = require( "../../utilities/auth" );
 
 exports.Login = async ( req, res ) => {
 	try {
@@ -23,8 +23,6 @@ exports.Login = async ( req, res ) => {
 		const token = await generateJWToken( {
 			id: admin._id
 		} );
-		console.log( "🚀 ~ exports.Login= ~ token:", token )
-
 		return res.status( 200 ).json( {
 			message: "Authentication successful",
 			user: { token, ...admin.toObject() },

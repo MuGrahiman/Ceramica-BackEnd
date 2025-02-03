@@ -1,4 +1,5 @@
 // middlewares/errorMiddleware.js
+
 const { UnauthorizedError } = require( "../errors/customErrors" );
 const { sendErrorResponse } = require( "../utilities/responses" );
 

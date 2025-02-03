@@ -3,9 +3,9 @@ const {
 	generateJWToken,
 	doHash,
 	generateOTP,
-} = require( "../utilities/auth" );
-const { sendMail } = require( "../utilities/mailer" );
-const { providerSelector } = require( "../utilities/providerSelector" );
+} = require( "../../utilities/auth" );
+const { sendMail } = require( "../../utilities/mailer" );
+const { providerSelector } = require( "../../utilities/providerSelector" );
 const userModel = require( "./user.model" );
 const otpModel = require( "../otp/otp.model" );
 
@@ -17,8 +17,6 @@ exports.Register = async ( req, res ) => {
 	const { email, password } = req.body;
 	try {
 		const existingUser = await userModel.findOne( { email } );
-		console.log( "🚀 ~ exports.Register= ~ existingUser:", existingUser );
-
 		if ( existingUser && existingUser.status === "verified" ) {
 			return res
 				.status( 401 )
@@ -68,8 +66,6 @@ exports.Register = async ( req, res ) => {
 exports.Login = async ( req, res ) => {
 	try {
 		const { email, password, uid, provider } = req.body;
-		console.log( "🚀 ~ exports.Login= ~ req.body:", req.body );
-
 		// Check if the user exists
 		const existingUser = await userModel.findOne( { email } );
 		if ( !existingUser ) {
@@ -92,7 +88,6 @@ exports.Login = async ( req, res ) => {
 			guId: uid,
 			fbId: uid,
 		} );
-		console.log( "🚀 ~ exports.Login= ~ currentValue:", currentValue );
 		const existingProviderValue = providerSelector( provider, {
 			password: existingUser.password,
 			guId: existingUser.guId,
@@ -117,10 +112,6 @@ exports.Login = async ( req, res ) => {
 				guId: "guId",
 				fbId: "fbId",
 			} );
-			console.log(
-				"🚀 ~ exports.Login= ~ existingUser[property]:",
-				existingUser[ property ]
-			);
 			existingUser[ property ] = await doHash( currentValue, 12 ); // Hash the new value
 			await existingUser.save();
 		}
@@ -152,11 +143,8 @@ exports.Login = async ( req, res ) => {
  */
 exports.Forgotten = async ( req, res ) => {
 	const { email } = req.body;
-	console.log( "🚀 ~ exports.Forgotten= ~ email:", email )
 	try {
 		const existingUser = await userModel.findOne( { email } );
-		console.log( "🚀 ~ exports.Forgotten= ~ existingUser:", existingUser )
-
 		if ( !existingUser ) {
 			return res
 				.status( 401 )

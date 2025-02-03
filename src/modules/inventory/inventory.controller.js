@@ -1,6 +1,6 @@
 // controllers/inventory.controller.js
-const { NotFoundError } = require( "../errors/customErrors" );
-const { sendSuccessResponse } = require( "../utilities/responses" );
+const { NotFoundError } = require( "../../errors/customErrors" );
+const { sendSuccessResponse } = require( "../../utilities/responses" );
 const inventoryService = require( "./inventory.service" );
 
 // Add product to inventory
