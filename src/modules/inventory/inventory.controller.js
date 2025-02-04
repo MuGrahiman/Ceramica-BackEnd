@@ -15,9 +15,9 @@ exports.addToInventory = async ( req, res ) => {
         statusCode: 201,
         message: "Product added to inventory successfully",
         data: newProduct,
-    } );
+    } );  
 };
-
+ 
 // Fetch all products
 exports.fetchInventory = async ( req, res ) => {
     const {

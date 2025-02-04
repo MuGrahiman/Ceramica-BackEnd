@@ -18,7 +18,13 @@ module.exports = ( err, req, res, next ) => {
 		statusCode = newError.statusCode;
 		message = newError.message
 	}
-	
+	// Handle TimeoutError
+	if ( err.name === "TimeoutError" ) {
+		const newError = new TimeoutError( "The request has timed out. Please try again." );
+		statusCode = newError.statusCode;
+		message = newError.message;
+	}
+
 	sendErrorResponse( res, {
 		statusCode,
 		message,

@@ -2,7 +2,6 @@
 const { default: mongoose } = require( 'mongoose' );
 const inventoryModel = require( './inventory.model' );
 const { ValidationError } = require( '../../errors/customErrors' );
-// const { paginate } = require( '../utils/pagination' );
 
 const verifyMongoId = ( id ) => {
     if ( !mongoose.Types.ObjectId.isValid( id ) ) {

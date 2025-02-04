@@ -8,7 +8,7 @@ const otpRoutes = require("../modules/otp/otp.route");
 const userRoutes = require("../modules/users/user.route");
 const adminRoutes = require("../modules/admin/admin.route");
 const inventoryRoutes = require("../modules/inventory/inventory.route");
-const errorMiddleware = require("../middlewares/errorMiddleware");
+const wishListRoutes = require("../modules/wishList/wishList.route");
 const { NotFoundError } = require( "../errors/customErrors" );
 
 const router = express.Router();
@@ -21,15 +21,13 @@ router.use("/auth", userRoutes);
 router.use("/admin", adminRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use('/cart', cartRoutes);
-// router.use('/wishlist', wishlistRoutes);
+router.use('/wishlist', wishListRoutes);
 
 // Catch-all route for unmatched requests
 router.use((req, res, next) => {
-    const error = new NotFoundError();
+    const error = new NotFoundError("Not found the url");
     next(error);
 });
 
-// Error Handling Middleware
-router.use(errorMiddleware);
-
+ 
 module.exports = router;

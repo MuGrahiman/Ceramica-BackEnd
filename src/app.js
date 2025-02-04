@@ -28,6 +28,10 @@ app.use( express.json() );
 const router = require( "./router/router" );
 app.use( "/api", router );
 
+// Error Handling Middleware
+const errorMiddleware = require( "./middlewares/errorMiddleware" );
+app.use(errorMiddleware);
+
 // const bookRoutes = require("./src/books/book.route");
 // const cartRoutes = require("./src/cart/cart.route");
 // const orderRoutes = require("./src/orders/order.route");
@@ -54,8 +58,6 @@ app.use( "/api", router );
 //   next(error);
 // });
 
-// // Error Handling Middleware
-// app.use(errorMiddleware);
 
 // Health Check Route
 app.get( "/", ( req, res ) => res.send( "Book Store Server is running!" ) );

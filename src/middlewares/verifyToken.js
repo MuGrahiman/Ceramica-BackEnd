@@ -6,7 +6,6 @@ const { UnauthorizedError, NotFoundError } = require( "../errors/customErrors" )
 const verifyToken = async ( req, res, next ) => {
     const authorizationHeader = req.headers[ "authorization" ];
     const token = authorizationHeader && authorizationHeader.split( " " )[ 1 ];
-
     if ( !token ) {
         return next( new UnauthorizedError( "Access Denied. No token provided." ) );
     }
