@@ -1,15 +1,23 @@
 // models/Cart.js
-const mongoose = require('mongoose');
+const mongoose = require( 'mongoose' );
 
-const CartItemSchema = new mongoose.Schema({
-    product_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory' },
-    quantity: { type: Number}
-}, { timestamps: true });
+const CartSchema = new mongoose.Schema( {
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    inventory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Inventory',
+        required: true
+    },
+    quantity: {
+        type: Number,
+        default: 1,
+        required: true
+    }
+}, { timestamps: true } );
 
-const CartSchema = new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    items: [CartItemSchema],
-}); // Automatically manages createdAt and updatedAt
 
-
-module.exports = mongoose.model('Cart', CartSchema);
+module.exports = mongoose.model( 'Cart', CartSchema );

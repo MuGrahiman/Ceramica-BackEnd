@@ -9,7 +9,7 @@ const userRoutes = require("../modules/users/user.route");
 const adminRoutes = require("../modules/admin/admin.route");
 const inventoryRoutes = require("../modules/inventory/inventory.route");
 const wishListRoutes = require("../modules/wishList/wishList.route");
-const { NotFoundError } = require( "../errors/customErrors" );
+const {  BadRequestError } = require( "../errors/customErrors" );
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.use('/wishlist', wishListRoutes);
 
 // Catch-all route for unmatched requests
 router.use((req, res, next) => {
-    const error = new NotFoundError("Not found the url");
+    const error = new BadRequestError("Not found the url");
     next(error);
 });
 
