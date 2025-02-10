@@ -20,6 +20,7 @@ exports.addToInventory = async ( req, res ) => {
  
 // Fetch all products
 exports.fetchInventory = async ( req, res ) => {
+    //TODO: Check the product status based on the user role
     const {
         page: queryPage,
         limit: queryLimit,
