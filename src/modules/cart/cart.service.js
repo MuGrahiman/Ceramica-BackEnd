@@ -45,6 +45,14 @@ class CartService {
         verifyMongoId(cartId);
         return await cartModel.findByIdAndDelete(cartId);
     }
+
+    static async deleteAllCartItems(userId) {
+        // Validate the userId format
+        verifyMongoId(userId);
+        // Delete all cart items associated with the userId
+        const result = await cartModel.deleteMany({ user: userId });
+        return result; // Return the result of the deletion
+    }
 }
 
 module.exports = CartService;
