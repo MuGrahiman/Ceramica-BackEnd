@@ -1,7 +1,9 @@
 // middlewares/errorMiddleware.js
 
+const { ApiError } = require( "@paypal/paypal-server-sdk" );
 const { UnauthorizedError } = require( "../errors/customErrors" );
 const { sendErrorResponse } = require( "../utilities/responses" );
+const { MongooseError } = require( "mongoose" );
 
 module.exports = ( err, req, res, next ) => {
 	console.error( "Error Middleware:", {
@@ -24,10 +26,19 @@ module.exports = ( err, req, res, next ) => {
 		statusCode = newError.statusCode;
 		message = newError.message;
 	}
-
+	if ( err instanceof ApiError ) {
+		const newError = err.result;
+		statusCode = newError.statusCode;
+		message = newError.message;
+	}
+	if ( err instanceof MongooseError ) {
+	
+		statusCode = newError.statusCode;
+		message = newError.message;
+	}
 	sendErrorResponse( res, {
 		statusCode,
-		message,
-		errors: err,
+		message, 
+		errors: err, 
 	} );
 };

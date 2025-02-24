@@ -9,5 +9,8 @@ module.exports = {
 	JWT_SECRET: process.env.JWT_SECRET_KEY,
 	Admin_User : process.env.ADMIN_USER,
 	Admin_Password:process.env.ADMIN_PASSWORD,
-	Mailer_Mail:process.env.MAILER_MAIL,Mailer_Token:process.env.MAILER_TOKEN
+	Mailer_Mail:process.env.MAILER_MAIL,Mailer_Token:process.env.MAILER_TOKEN,
+	Stripe_Secret_Key: process.env.STRIPE_SECRET_KEY,
+
 };
+ 

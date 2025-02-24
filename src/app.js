@@ -32,34 +32,7 @@ app.use( "/api", router );
 const errorMiddleware = require( "./middlewares/errorMiddleware" );
 app.use(errorMiddleware);
 
-// const bookRoutes = require("./src/books/book.route");
-// const cartRoutes = require("./src/cart/cart.route");
-// const orderRoutes = require("./src/orders/order.route");
-// const otpRoutes = require("./src/otp/otp.route");
-// const userRoutes = require("./src/users/user.route");
-// const adminRoutes = require("./src/admin/admin.route");
-// const inventoryRoutes = require("./src/inventory/inventory.route");
-// const errorMiddleware = require("./src/middlewares/errorMiddleware");
-
-// // Route Definitions
-// app.use("/api/books", bookRoutes);
-// app.use("/api/orders", orderRoutes);
-// app.use("/api/otp", otpRoutes);
-// app.use("/api/auth", userRoutes);
-// app.use("/api/admin", adminRoutes);
-// app.use("/api/inventory", inventoryRoutes);
-// app.use('/api/cart', cartRoutes);
-// // app.use('/api/wishlist', wishlistRoutes);
-
-// // Catch-all route for unmatched requests
-// app.use((req, res, next) => {
-//   const error = new Error("Not Found");
-//   error.status = 404;
-//   next(error);
-// });
-
-
 // Health Check Route
-app.get( "/", ( req, res ) => res.send( "Book Store Server is running!" ) );
+app.get( "/", ( req, res ) => res.send( " Store Server is running!" ) );
 
 module.exports = app; 
