@@ -13,13 +13,7 @@ const orderSchema = new mongoose.Schema( {
         },
     ],
     totalAmount: { type: Number, required: true, min: 0 },
-    paymentStatus: {
-        type: String,
-        enum: Object.values( PAYMENT_STATUS ),
-        default: PAYMENT_STATUS.CREATED,
-        required: true,
-    },
-    paymentId: { type: String },
+    paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" }, // Reference Payment model
     status: {
         type: String,
         enum: [ "processing", "shipped", "delivered", "cancelled" ],

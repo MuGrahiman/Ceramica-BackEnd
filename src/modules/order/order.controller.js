@@ -8,6 +8,7 @@ const {
 const { sendSuccessResponse } = require( '../../utilities/responses' );
 const paypalService = require( './paypal.service' );
 const { PAYMENT_STATUS } = require( '../../utilities/constants' );
+const paymentService = require( './payment.service' );
 
 /**
  * Create a new order
@@ -48,15 +49,22 @@ exports.createOrder = async ( req, res ) => {
     totalAmount
   } );
 
-  newOrder.paymentId = paypalOrder.id;
-  newOrder.paymentStatus = PAYMENT_STATUS.SAVED;
+  // Create PayPal order
+  const newPayment = await paymentService.createPayment( {
+    orderId: newOrder._id,
+    paypalId: paypalOrder.id,
+  } );
+
+  newOrder.paymentId = newPayment._id;
   await newOrder.save();
+  newPayment.status = PAYMENT_STATUS.SAVED;
+  await newPayment.save();
 
   // Send success response
   sendSuccessResponse( res, {
     statusCode: 201,
     message: "Order created successfully",
-    data: newOrder,
+    data: paypalOrder.id,
   } );
 };
 
@@ -71,29 +79,48 @@ exports.capturePayment = async ( req, res ) => {
     throw new ValidationError( "Order Id required" );
   }
 
+  // Find the payment
+  const existingPayment = await paymentService.findPaymentByCriteria( { paypalId: orderID } );
+  if ( !existingPayment ) {
+    throw new NotFoundError( "Payment not found" );
+  }
+
   // Find the order
-  const existingOrder = await OrderService.findOrderByCriteria( { paymentId: orderID } );
+  const existingOrder = await OrderService.findOrderByCriteria( { paymentId: existingPayment._id } );
   if ( !existingOrder ) {
     throw new NotFoundError( "Order not found" );
   }
+  if ( !existingOrder._id.equals( existingPayment.orderId ) ) {
+    throw new ValidationError( "Order not match" );
+  }
 
   // Update payment status to "Approved"
-  existingOrder.paymentStatus = PAYMENT_STATUS.APPROVED;
-  await existingOrder.save();
+  existingPayment.status = PAYMENT_STATUS.APPROVED;
+  await existingPayment.save();
 
   // Capture PayPal payment
   const captureData = await paypalService.capturePayment( orderID );
 
   // Update payment status based on capture response
-  existingOrder.paymentStatus = PAYMENT_STATUS[ captureData.status ];
-  await existingOrder.save();
+  const payer = captureData.payer
+  existingPayment.payerId = payer.payerId;
+  existingPayment.payerMail = payer.emailAddress;
 
+  const capture = captureData.purchaseUnits[ 0 ].payments.captures[ 0 ]
+  existingPayment.status = PAYMENT_STATUS[ capture.status ];
+  existingPayment.amount = capture.amount;
+  existingPayment.transactionId = capture.id;
+  existingPayment.createTime = capture.createTime;
+  await existingPayment.save();
+
+  // existingOrder.paymentStatus = PAYMENT_STATUS[ captureData.status ];
+  // await existingOrder.save(); 
 
   // Send success response
   sendSuccessResponse( res, {
     statusCode: 200,
-    message: `Payment ${ captureData.status }`,
-    data: existingOrder,
+    message: `Payment ${ existingPayment.status }`,
+    data: existingPayment,
   } );
 
 }
@@ -105,25 +132,24 @@ exports.capturePayment = async ( req, res ) => {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-exports.getOrderById = async ( req, res ) => {
-  const orderId = req.params.id;
-
+exports.getOrderPaymentDetails = async ( req, res ) => {
+  const paymentId = req.params.id;
   // Validate order ID
-  if ( !orderId ) {
+  if ( !paymentId ) {
     throw new BadRequestError( 'Order ID is required' );
   }
 
-  const order = await OrderService.getOrderById( orderId );
+  const payment = await paymentService.getPaymentById( paymentId );
 
-  // Check if order exists
-  if ( !order ) {
+  // Check if payment exists
+  if ( !payment ) {
     throw new NotFoundError( 'Order not found' );
   }
 
   // Send success response
   sendSuccessResponse( res, {
-    message: 'Order retrieved successfully',
-    data: order,
+    message: 'Payment retrieved successfully',
+    data: payment,
   } );
 };
 

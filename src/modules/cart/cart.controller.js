@@ -69,7 +69,7 @@ exports.updateCartItem = async ( req, res ) => {
         data: cartItem,
     } );
 };
-
+ 
 // Get cart
 exports.getCart = async ( req, res ) => {
     const cart = await CartService.getCart( { user: req.user.id } );
