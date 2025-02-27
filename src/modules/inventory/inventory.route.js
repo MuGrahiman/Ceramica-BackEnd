@@ -1,8 +1,8 @@
 const express = require( "express" );
 const asyncHandler = require( "express-async-handler" );
 const inventoryController = require( "./inventory.controller" );
-const verifyToken = require( "../../middlewares/verifyToken" );
-const verifyAdmin = require( "../../middlewares/verifyAdmin" );
+const verifyToken = require( "../../middlewares/verify.Token.Middleware" );
+const verifyAdmin = require( "../../middlewares/verify.Admin.Middleware" );
 
 const router = express.Router();
 

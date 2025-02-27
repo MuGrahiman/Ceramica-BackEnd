@@ -3,7 +3,7 @@ const express = require( "express" );
 const asyncHandler = require( "express-async-handler" );
 
 const { addToWishlist, removeFromWishlist, getWishlist } = require( "./wishList.controller" );
-const verifyToken = require( "../../middlewares/verifyToken" );
+const verifyToken = require( "../../middlewares/verify.Token.Middleware" );
 const router = express.Router();
 
 router.post( '/add', verifyToken, asyncHandler( addToWishlist ) );

@@ -1,7 +1,7 @@
 // cart.route.js
 const express = require( 'express' );
 const asyncHandler = require( "express-async-handler" );
-const verifyToken = require( '../../middlewares/verifyToken' );
+const verifyToken = require( '../../middlewares/verify.Token.Middleware' );
 const { addToCart, removeFromCart, updateCartItem, getCart, clearCart } = require( './cart.controller' );
 const router = express.Router();
 

@@ -27,7 +27,7 @@
 |   ├── db.config.js
 |   └── env.config.js
 ├── /middlewares 
-|   └── errorMiddleware.js
+|   └── error.Middleware.js
 ├── app.js (Express app configuration)
 ├── server.js (Server and database setup)
 ├── index.js (Entry point)

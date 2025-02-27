@@ -28,11 +28,15 @@ app.use( express.json() );
 const router = require( "./router/router" );
 app.use( "/api", router );
 
-// Error Handling Middleware
-const errorMiddleware = require( "./middlewares/errorMiddleware" );
-app.use(errorMiddleware);
-
 // Health Check Route
 app.get( "/", ( req, res ) => res.send( " Store Server is running!" ) );
+
+// Catch-all route for unmatched requests
+const notFoundMiddleware = require( "../src/middlewares/notFound.Middleware" );
+app.use( notFoundMiddleware );
+
+// Error Handling Middleware
+const errorMiddleware = require( "./middlewares/error.Middleware" );
+app.use( errorMiddleware );
 
 module.exports = app; 

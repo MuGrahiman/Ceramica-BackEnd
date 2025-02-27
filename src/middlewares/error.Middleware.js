@@ -1,4 +1,4 @@
-// middlewares/errorMiddleware.js
+// middlewares/error.Middleware.js
 
 const { ApiError } = require( "@paypal/paypal-server-sdk" );
 const { UnauthorizedError } = require( "../errors/customErrors" );

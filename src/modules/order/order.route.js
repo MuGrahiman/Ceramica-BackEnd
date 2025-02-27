@@ -2,7 +2,7 @@
 const asyncHandler = require( "express-async-handler" );
 const express = require( "express" );
 const router = express.Router();
-const verifyToken = require( '../../middlewares/verifyToken' );
+const verifyToken = require( '../../middlewares/verify.Token.Middleware' );
 const {
     createOrder,
     getOrderById,
