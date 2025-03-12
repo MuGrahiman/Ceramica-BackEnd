@@ -10,6 +10,7 @@ const wishListRoutes = require( "../modules/wishList/wishList.route" );
 const cartRoutes = require( "../modules/cart/cart.route" );
 const addressRoutes = require( "../modules/address/address.route" );
 const orderRoutes = require( "../modules/order/order.route" );
+const couponRoutes = require( "../modules/coupon/coupon.route" );
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.use( '/wishlist', wishListRoutes );
 router.use( '/cart', cartRoutes );
 router.use( '/address', addressRoutes );
 router.use( "/order", orderRoutes );
+router.use( "/coupon", couponRoutes );
 
 
 module.exports = router;
