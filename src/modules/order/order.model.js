@@ -12,6 +12,7 @@ const orderSchema = new mongoose.Schema( {
             quantity: { type: Number, required: true, min: 1 },
         },
     ],
+    couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },
     totalAmount: { type: Number, required: true, min: 0 },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" }, // Reference Payment model
     status: {

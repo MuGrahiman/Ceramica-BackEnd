@@ -159,42 +159,59 @@ exports.deleteCoupon = async ( req, res ) => {
     } );
 };
 
-exports.checkCouponCode = async ( req, res ) => {
-    const { code } = req.params;
-    const { price } = req.body;
-    const userId = req.user.id;
-    if ( !code ) {
-        throw new ValidationError( 'Coupon code is required.' );
+/** 
+ * Controller to validate a coupon code.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @throws {ValidationError} when the coupon code is invalid or not applicable.
+ * @throws {NotFoundError} when the coupon does not exist. 
+ */
+exports.checkCouponCode = async (req, res) => {
+    const { code } = req.params; // Coupon code from the URL parameter
+    const { purchaseAmount } = req.body; // purchaseAmount from the request body to check against minimum purchase amount
+    const userId = req.user.id; // Get the user ID from the authenticated user
+
+    // Validate that the coupon code is provided
+    if (!code) {
+        throw new ValidationError('Coupon code is required.');
     }
 
-    const existingCoupon = await CouponService.findCoupon( { couponCode: code } );
-
-    if ( !existingCoupon ) {
-        throw new NotFoundError( 'Coupon not found.' );
+    // Retrieve the coupon using the provided coupon code
+    const existingCoupon = await CouponService.findCoupon({ couponCode: code });
+    // Check if the coupon exists
+    if (!existingCoupon) {
+        throw new NotFoundError('Coupon not found.');
     }
 
-    const currentDate = new Date();
+    const currentDate = new Date(); // Get the current date for validation checks
 
-    if ( existingCoupon.validFrom > currentDate ) {
-        throw new ValidationError( 'Coupon not  valid start date.' );
-    }
-
-    if ( existingCoupon.validUntil < currentDate ) {
-        throw new ValidationError( 'Coupon has expired.' );
+    // Validate the coupon's active period
+    if (existingCoupon.validFrom > currentDate) {
+        throw new ValidationError('Coupon is not yet valid.');
     }
 
-    if ( existingCoupon.minimumPurchaseAmount < price ) {
-        throw new ValidationError( 'Not reached to Minimum purchase amount .' );
-    }
-    if ( existingCoupon.status !== COUPON_STATUS.ACTIVE ) {
-        throw new ValidationError( 'Coupon is not active.' );
-    }
-    if ( existingCoupon.redeemedBy.includes( userId ) ) {
-        throw new ValidationError( 'You already used the coupon' );
+    if (existingCoupon.validUntil < currentDate) {
+        throw new ValidationError('Coupon has expired.');
     }
 
-    sendSuccessResponse( res, {
+    // Validate the minimum purchase amount
+    if (existingCoupon.minimumPurchaseAmount > purchaseAmount) {
+        throw new ValidationError('The purchase amount does not meet the minimum requirement.');
+    }
+
+    // Verify the coupon status
+    if (existingCoupon.status !== COUPON_STATUS.ACTIVE) {
+        throw new ValidationError('Coupon is not active.');
+    }
+
+    // Check if the user has already redeemed the coupon
+    if (existingCoupon.redeemedBy.includes(userId)) {
+        throw new ValidationError('You have already used this coupon.');
+    }
+
+    // Respond with success if all validations pass
+    sendSuccessResponse(res, {
         message: 'Coupon code is valid.',
         data: existingCoupon,
-    } );
+    });
 };

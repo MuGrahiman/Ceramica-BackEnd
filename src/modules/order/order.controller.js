@@ -1,3 +1,4 @@
+const CouponService = require( '../coupon/coupon.service' );
 const OrderService = require( './order.service' );
 const {
   CustomError,
@@ -9,6 +10,7 @@ const { sendSuccessResponse } = require( '../../utilities/responses' );
 const paypalService = require( './paypal.service' );
 const { PAYMENT_STATUS } = require( '../../utilities/constants' );
 const paymentService = require( './payment.service' );
+const { applyDiscountToItems } = require( '../../utilities/discountUtility' );
 
 /**
  * Create a new order
@@ -17,11 +19,10 @@ const paymentService = require( './payment.service' );
  */
 exports.createOrder = async ( req, res ) => {
   const userId = req.user._id;
-  const { addressId, items, totalAmount } = req.body;
-
+  const { addressId, items, totalAmount, couponId } = req.body;
   // Validate required fields
-  if ( !addressId || !items?.length || !totalAmount ) {
-    throw new ValidationError( "Missing required fields: userId, addressId, items, or totalAmount" );
+  if ( !addressId || !items?.length ) {
+    throw new ValidationError( "Missing required fields" );
   }
 
   // Validate items array
@@ -33,28 +34,42 @@ exports.createOrder = async ( req, res ) => {
   if ( typeof totalAmount !== "number" || totalAmount <= 0 ) {
     throw new ValidationError( "Total amount must be a positive number" );
   }
+  let orderedItems = items, orderedAmount = totalAmount;
+  if ( couponId ) {
+    const coupon = await CouponService.findCoupon( { _id: couponId } );
+    // Validate totalAmount (must be a positive number)
+    if ( !coupon || !Object.keys( coupon ).length ) {
+      throw new NotFoundError( "Coupon not found" );
+    }
 
+    const discountPercentage = coupon.discount; // Example discount percentage
+
+    const { adjustedItems, adjustedTotal } = applyDiscountToItems( items, discountPercentage );
+
+    orderedItems = adjustedItems
+    orderedAmount = adjustedTotal
+
+  }
   // Create the order
   const newOrder = await OrderService.createOrder( {
     userId,
     addressId,
-    items,
-    totalAmount,
-  } );
+    couponId,
+    items: orderedItems,
+    totalAmount: orderedAmount,
 
+  } );
   // Create PayPal order
   const paypalOrder = await paypalService.createOrder( {
     orderId: newOrder._id.toString(),
-    items,
-    totalAmount
+    items: orderedItems,
+    totalAmount: orderedAmount
   } );
-
   // Create PayPal order
   const newPayment = await paymentService.createPayment( {
     orderId: newOrder._id,
     paypalId: paypalOrder.id,
   } );
-
   newOrder.paymentId = newPayment._id;
   await newOrder.save();
   newPayment.status = PAYMENT_STATUS.SAVED;
@@ -74,6 +89,7 @@ exports.createOrder = async ( req, res ) => {
  * @param {Object} res - Express response object
  */
 exports.capturePayment = async ( req, res ) => {
+  const userId = req.user._id;
   const { orderID } = req.body;
   if ( !orderID ) {
     throw new ValidationError( "Order Id required" );
@@ -115,6 +131,19 @@ exports.capturePayment = async ( req, res ) => {
 
   // existingOrder.paymentStatus = PAYMENT_STATUS[ captureData.status ];
   // await existingOrder.save(); 
+  if ( existingOrder.couponId ) {
+    // Find the coupon by ID
+    const coupon = await CouponService.findCoupon( { _id: existingOrder.couponId } );
+    if ( coupon.redeemedBy.includes( userId ) ) {
+      throw new Error( 'User has already redeemed this coupon' );
+    }
+
+    // Add the user ID to the redeemedBy array
+    coupon.redeemedBy.push( userId );
+
+    // Save the updated coupon
+    await coupon.save();
+  }
 
   // Send success response
   sendSuccessResponse( res, {
