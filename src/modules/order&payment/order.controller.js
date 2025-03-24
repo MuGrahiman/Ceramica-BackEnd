@@ -1,16 +1,17 @@
 const CouponService = require( '../coupon/coupon.service' );
 const OrderService = require( './order.service' );
 const {
-  CustomError,
   ValidationError,
   NotFoundError,
   BadRequestError,
 } = require( '../../errors/customErrors' );
 const { sendSuccessResponse } = require( '../../utilities/responses' );
 const paypalService = require( './paypal.service' );
-const { PAYMENT_STATUS } = require( '../../utilities/constants' );
+const { PAYMENT_STATUS, ORDER_STATUSES, ORDER_STATUSES_ARRAY } = require( '../../utilities/constants' );
 const paymentService = require( './payment.service' );
 const { applyDiscountToItems } = require( '../../utilities/discountUtility' );
+const { getSortOptions } = require( '../../utilities/sort' );
+const { USER_ROLES } = require( "../../utilities/constants" );
 
 /**
  * Create a new order
@@ -20,6 +21,7 @@ const { applyDiscountToItems } = require( '../../utilities/discountUtility' );
 exports.createOrder = async ( req, res ) => {
   const userId = req.user._id;
   const { addressId, items, totalAmount, couponId } = req.body;
+
   // Validate required fields
   if ( !addressId || !items?.length ) {
     throw new ValidationError( "Missing required fields" );
@@ -37,12 +39,13 @@ exports.createOrder = async ( req, res ) => {
   let orderedItems = items, orderedAmount = totalAmount;
   if ( couponId ) {
     const coupon = await CouponService.findCoupon( { _id: couponId } );
+
     // Validate totalAmount (must be a positive number)
     if ( !coupon || !Object.keys( coupon ).length ) {
       throw new NotFoundError( "Coupon not found" );
     }
 
-    const discountPercentage = coupon.discount; // Example discount percentage
+    const discountPercentage = coupon.discount; 
 
     const { adjustedItems, adjustedTotal } = applyDiscountToItems( items, discountPercentage );
 
@@ -50,6 +53,7 @@ exports.createOrder = async ( req, res ) => {
     orderedAmount = adjustedTotal
 
   }
+
   // Create the order
   const newOrder = await OrderService.createOrder( {
     userId,
@@ -59,12 +63,14 @@ exports.createOrder = async ( req, res ) => {
     totalAmount: orderedAmount,
 
   } );
+
   // Create PayPal order
   const paypalOrder = await paypalService.createOrder( {
     orderId: newOrder._id.toString(),
     items: orderedItems,
     totalAmount: orderedAmount
   } );
+
   // Create PayPal order
   const newPayment = await paymentService.createPayment( {
     orderId: newOrder._id,
@@ -129,8 +135,6 @@ exports.capturePayment = async ( req, res ) => {
   existingPayment.createTime = capture.createTime;
   await existingPayment.save();
 
-  // existingOrder.paymentStatus = PAYMENT_STATUS[ captureData.status ];
-  // await existingOrder.save(); 
   if ( existingOrder.couponId ) {
     // Find the coupon by ID
     const coupon = await CouponService.findCoupon( { _id: existingOrder.couponId } );
@@ -154,8 +158,6 @@ exports.capturePayment = async ( req, res ) => {
 
 }
 
-
-
 /**
  * Get an order by ID
  * @param {Object} req - Express request object
@@ -163,6 +165,7 @@ exports.capturePayment = async ( req, res ) => {
  */
 exports.getOrderPaymentDetails = async ( req, res ) => {
   const paymentId = req.params.id;
+
   // Validate order ID
   if ( !paymentId ) {
     throw new BadRequestError( 'Order ID is required' );
@@ -182,12 +185,34 @@ exports.getOrderPaymentDetails = async ( req, res ) => {
   } );
 };
 
+
+
+/**
+ * Get all orders for a admin
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getOrdersForAdmin = async ( req, res ) => {
+  const userRole = req.user.role;
+  if ( userRole !== USER_ROLES.ADMIN ) {
+    throw new ForbiddenError( 'User is not allowed to change the status' );
+  }
+  
+  const orders = await OrderService.findOrdersByUser();
+
+  // Send success response
+  sendSuccessResponse( res, {
+    message: 'Orders retrieved successfully',
+    data: orders,
+  } );
+};
+
 /**
  * Get all orders for a user
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-exports.getOrdersByUser = async ( req, res ) => {
+exports.getOrdersForUser = async ( req, res ) => {
   const userId = req.user.id;
 
   // Validate user ID
@@ -195,7 +220,28 @@ exports.getOrdersByUser = async ( req, res ) => {
     throw new BadRequestError( 'User ID is required' );
   }
 
-  const orders = await OrderService.getOrdersByUser( userId );
+  const orders = await OrderService.findOrdersByUser( { userId } );
+
+  // Send success response
+  sendSuccessResponse( res, {
+    message: 'Orders retrieved successfully',
+    data: orders,
+  } );
+};
+
+/**
+ * Get all orders for a user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.getOrderById = async ( req, res ) => {
+  const orderId = req.params.id;
+  // Validate user ID
+  if ( !orderId ) {
+    throw new BadRequestError( 'Order ID is required' );
+  }
+
+  const orders = await OrderService.findOrderById( orderId );
 
   // Send success response
   sendSuccessResponse( res, {
@@ -210,18 +256,20 @@ exports.getOrdersByUser = async ( req, res ) => {
  * @param {Object} res - Express response object
  */
 exports.updateOrderStatus = async ( req, res ) => {
+  const userRole = req.user.role;
   const orderId = req.params.id;
   const { status } = req.body;
-
   // Validate order ID
   if ( !orderId ) {
     throw new BadRequestError( 'Order ID is required' );
   }
 
+  if ( userRole === USER_ROLES.CLIENT && status !== ORDER_STATUSES.CANCELLED ) {
+    throw new ForbiddenError( 'User is not allowed to change the status' );
+  }
   // Validate status
-  const validStatuses = [ 'processing', 'shipped', 'delivered', 'cancelled' ];
-  if ( !status || !validStatuses.includes( status ) ) {
-    throw new ValidationError( `Status must be one of: ${ validStatuses.join( ', ' ) }` );
+  if ( !status || !ORDER_STATUSES_ARRAY.includes( status ) ) {
+    throw new ValidationError( `Status must be one of: ${ ORDER_STATUSES_ARRAY.join( ', ' ) }` );
   }
 
   const updatedOrder = await OrderService.updateOrderStatus( orderId, status );

@@ -14,12 +14,17 @@ class OrderService {
     }
 
 
-    async getOrderById ( orderId ) {
-        return await this.Order.findById( orderId ).populate( "userId" ).populate( "items.productId" );
+    async findOrderById ( orderId ) {
+        return await this.Order.findById( orderId )
+            .populate( "userId" ).populate( "items.productId" )
+            .populate( "paymentId" ).populate( "addressId" )
+            .populate( "couponId" );
     }
 
-    async getOrdersByUser ( userId ) {
-        return await this.Order.find( { userId } ).sort( { createdAt: -1 } );
+    async findOrdersByUser ( { userId = null, sortOption, search } = {} ) {
+        const options = userId ? { userId } : {}
+        return await this.Order.find( options ).sort( { createdAt: -1 } )
+            .populate( "userId" ).populate( "paymentId" ).populate( "items.productId" );
     }
 
     async updateOrderStatus ( orderId, status ) {

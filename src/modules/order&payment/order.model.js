@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema( {
     ],
     couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },
     totalAmount: { type: Number, required: true, min: 0 },
-    paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" }, // Reference Payment model
+    paymentId: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
     status: {
         type: String,
         enum: [ "processing", "shipped", "delivered", "cancelled" ],

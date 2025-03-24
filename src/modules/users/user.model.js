@@ -1,6 +1,6 @@
 const mongoose = require( "mongoose" );
 const bcrypt = require( "bcryptjs" );
-
+const { USER_ROLES, USER_ROLES_ARRAY } = require( "../../utilities/constants" );
 const userSchema = new mongoose.Schema(
 	{
 		firstName: {
@@ -35,22 +35,22 @@ const userSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: [ "client", "admin" ],
-			default: "client"
+			enum: USER_ROLES_ARRAY,
+			default: USER_ROLES.CLIENT
 		},
 		avatar: {
 			public_id: {
 				type: String,
-				required: true,
-				default: "https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?t=st=1741285501~exp=1741289101~hmac=d629ec566545ef3b552d0a991e687ad2ed1aab9f352ae82b2df97cd3ad059148&w=740"
+				// required: true,
 			},
 			url: {
 				type: String,
-				required: true,
+				// required: true,
+				default: "https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?t=st=1741285501~exp=1741289101~hmac=d629ec566545ef3b552d0a991e687ad2ed1aab9f352ae82b2df97cd3ad059148&w=740"
 			},
 			type: {
 				type: String,
-				required: true,
+				// required: true,
 			},
 		}
 	},

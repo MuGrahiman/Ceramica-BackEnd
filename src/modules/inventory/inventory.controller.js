@@ -1,6 +1,7 @@
 // controllers/inventory.controller.js
 const { NotFoundError } = require( "../../errors/customErrors" );
 const { sendSuccessResponse } = require( "../../utilities/responses" );
+const {  getSortOptions } = require( "../../utilities/sort" );
 const inventoryService = require( "./inventory.service" );
 
 // Add product to inventory
@@ -15,9 +16,9 @@ exports.addToInventory = async ( req, res ) => {
         statusCode: 201,
         message: "Product added to inventory successfully",
         data: newProduct,
-    } );  
+    } );
 };
- 
+
 // Fetch all products
 exports.fetchInventory = async ( req, res ) => {
     //TODO: Check the product status based on the user role
@@ -59,21 +60,7 @@ exports.fetchInventory = async ( req, res ) => {
         if ( maxPrice ) filters.price.$lte = Number( maxPrice );
     }
 
-    let sortOptions = { createdAt: -1 }; // Default sorting
-    switch ( sort ) {
-        case "newest":
-            sortOptions = { createdAt: -1 };
-            break;
-        case "oldest":
-            sortOptions = { createdAt: 1 };
-            break;
-        case "price_desc":
-            sortOptions = { price: -1 };
-            break;
-        case "price_asc":
-            sortOptions = { price: 1 };
-            break;
-    }
+    const sortOptions = getSortOptions( sort )
 
     const products = await inventoryService.fetchProducts( page, limit, filters, sortOptions, search );
     sendSuccessResponse( res, {
