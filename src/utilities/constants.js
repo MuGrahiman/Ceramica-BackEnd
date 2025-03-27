@@ -18,7 +18,7 @@ exports.PAYMENT_STATUS = {
     PAYER_ACTION_REQUIRED: "PayerActionRequired",
 };
 
-exports.PAYMENT_STATUS_ARRAY = Object.values(exports.PAYMENT_STATUS);
+exports.PAYMENT_STATUS_ARRAY = Object.values( exports.PAYMENT_STATUS );
 
 /**
  * Coupon statuses used in the application.
@@ -32,7 +32,7 @@ exports.COUPON_STATUS = {
     IN_ACTIVE: "inActive",
 };
 
-exports.COUPON_STATUS_ARRAY = Object.values(exports.COUPON_STATUS);
+exports.COUPON_STATUS_ARRAY = Object.values( exports.COUPON_STATUS );
 
 /**
  * User roles used in the application.
@@ -46,7 +46,7 @@ exports.USER_ROLES = {
     ADMIN: "admin",
 };
 
-exports.USER_ROLES_ARRAY = Object.values(exports.USER_ROLES);
+exports.USER_ROLES_ARRAY = Object.values( exports.USER_ROLES );
 
 /**
  * Order statuses used in the application.
@@ -64,4 +64,12 @@ exports.ORDER_STATUSES = {
     CANCELLED: "cancelled",
 };
 
-exports.ORDER_STATUSES_ARRAY = Object.values(exports.ORDER_STATUSES);
+exports.ORDER_STATUSES_ARRAY = Object.values( exports.ORDER_STATUSES );
+
+exports.INQUIRY_STATUS = {
+    PENDING: 'pending',   
+    RESOLVED: 'resolved', 
+};
+
+
+exports.INQUIRY_STATUS_ARRAY = Object.values( exports.INQUIRY_STATUS );

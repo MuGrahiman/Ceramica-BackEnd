@@ -11,6 +11,7 @@ const cartRoutes = require( "../modules/cart/cart.route" );
 const addressRoutes = require( "../modules/address/address.route" );
 const orderRoutes = require( "../modules/order&payment/order.route" );
 const couponRoutes = require( "../modules/coupon/coupon.route" );
+const inquiryRoutes = require( "../modules/inquiry/inquiry.routes" );
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.use( '/cart', cartRoutes );
 router.use( '/address', addressRoutes );
 router.use( "/order", orderRoutes );
 router.use( "/coupon", couponRoutes );
+router.use("/inquiry", inquiryRoutes);
 
 
 module.exports = router;
