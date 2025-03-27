@@ -1,16 +1,16 @@
 const express = require( "express" );
 
 // Import all routes
-const bookRoutes = require( "../modules/books/book.route" );
-const otpRoutes = require( "../modules/otp/otp.route" );
-const userRoutes = require( "../modules/users/user.route" );
-const adminRoutes = require( "../modules/admin/admin.route" );
-const inventoryRoutes = require( "../modules/inventory/inventory.route" );
-const wishListRoutes = require( "../modules/wishList/wishList.route" );
-const cartRoutes = require( "../modules/cart/cart.route" );
-const addressRoutes = require( "../modules/address/address.route" );
-const orderRoutes = require( "../modules/order&payment/order.route" );
-const couponRoutes = require( "../modules/coupon/coupon.route" );
+const bookRoutes = require( "../modules/books/book.routes" );
+const otpRoutes = require( "../modules/otp/otp.routes" );
+const userRoutes = require( "../modules/users/user.routes" );
+const adminRoutes = require( "../modules/admin/admin.routes" );
+const inventoryRoutes = require( "../modules/inventory/inventory.routes" );
+const wishListRoutes = require( "../modules/wishList/wishList.routes" );
+const cartRoutes = require( "../modules/cart/cart.routes" );
+const addressRoutes = require( "../modules/address/address.routes" );
+const orderRoutes = require( "../modules/order&payment/order.routes" );
+const couponRoutes = require( "../modules/coupon/coupon.routes" );
 const inquiryRoutes = require( "../modules/inquiry/inquiry.routes" );
 
 const router = express.Router();
@@ -26,7 +26,7 @@ router.use( '/cart', cartRoutes );
 router.use( '/address', addressRoutes );
 router.use( "/order", orderRoutes );
 router.use( "/coupon", couponRoutes );
-router.use("/inquiry", inquiryRoutes);
+router.use( "/inquiry", inquiryRoutes );
 
 
 module.exports = router;
