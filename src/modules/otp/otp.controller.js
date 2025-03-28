@@ -43,7 +43,11 @@ exports.Send = async ( req, res ) => {
 		}
 
 		const otp = await generateOTP();
-		const info = await sendMail( existingUser, otp );
+		const info = await sendMail(
+			existingUser.email,
+			"OTP Verification Code",
+			"<h1>" + OTP + "</h1>"
+		);
 		// Check if the email was successfully sent
 		if ( info.accepted[ 0 ] !== existingUser.email ) {
 			// If email sending fails, return 400 error

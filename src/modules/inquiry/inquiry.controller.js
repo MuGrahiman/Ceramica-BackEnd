@@ -2,6 +2,7 @@ const { NotFoundError, ValidationError } = require( '../../errors/customErrors' 
 const { sendSuccessResponse } = require( '../../utilities/responses' );
 const InquiryService = require( './inquiry.service' );
 const { INQUIRY_STATUS } = require( '../../utilities/constants' );
+const { sendMail } = require( '../../utilities/mailer' );
 
 exports.createInquiry = async ( req, res ) => {
     const { name, email, subject, message } = req.body;
@@ -27,7 +28,6 @@ exports.createInquiry = async ( req, res ) => {
 
 exports.getInquiries = async ( req, res ) => {
     const { status, search, sort } = req.query;
-    console.log( "🚀 ~ exports.getInquiries= ~ sort:", sort )
     let messages;
     if ( search ) {
         messages = await InquiryService.searchInquiries( search );
@@ -36,7 +36,7 @@ exports.getInquiries = async ( req, res ) => {
     }
 
     sendSuccessResponse( res, {
-        message: 'Messages retrieved successfully',
+        message: 'Inquirys retrieved successfully',
         data: messages
     } );
 };
@@ -45,55 +45,48 @@ exports.getInquiry = async ( req, res ) => {
     const { id } = req.params;
 
     if ( !id ) {
-        throw new ValidationError( 'Message ID is required' );
+        throw new ValidationError( 'Inquiry ID is required' );
     }
 
     const message = await InquiryService.findInquiry( { _id: id } );
     if ( !message ) {
-        throw new NotFoundError( 'Message not found' );
+        throw new NotFoundError( 'Inquiry not found' );
     }
 
     sendSuccessResponse( res, {
-        message: 'Message retrieved successfully',
+        message: 'Inquiry retrieved successfully',
         data: message
     } );
 };
 
-exports.updateInquiry = async ( req, res ) => {
+
+exports.replyToInquiry = async ( req, res ) => {
     const { id } = req.params;
-    const data = req.body;
-
-    if ( !id || Object.keys( data ).length === 0 ) {
-        throw new ValidationError( 'Message ID and update data are required' );
+    const replyData = req.body;
+    if ( !id || !replyData ) {
+        throw new ValidationError( 'Inquiry ID and reply content are required' );
     }
 
-    // Prevent certain fields from being updated
-    const allowedUpdates = [ 'status', 'adminNotes' ];
-    const updates = Object.keys( data ).filter( key => allowedUpdates.includes( key ) );
-
-    if ( updates.length === 0 ) {
-        throw new ValidationError( 'No valid fields to update' );
+    const inquiryData = await InquiryService.findInquiry( { _id: id } );
+    if ( !inquiryData ) {
+        throw new NotFoundError( 'Inquiry not found' );
     }
 
-    if ( data.status && !Object.values( INQUIRY_STATUS ).includes( data.status ) ) {
-        throw new ValidationError( 'Invalid status value' );
+    const info = await sendMail(
+        inquiryData.email,
+        `Reply: ${ inquiryData.subject }`,
+        `<p>${ replyData }</p>`
+    );
+
+    if ( info.accepted[ 0 ] !== inquiryData.email ) {
+        throw new ValidationError( 'Email sending failed' );
     }
 
-    const updateObject = {};
-    updates.forEach( update => updateObject[ update ] = data[ update ] );
-
-    const updatedMessage = await InquiryService.updateInquiry( {
-        messageId: id,
-        data: updateObject
-    } );
-
-    if ( !updatedMessage ) {
-        throw new NotFoundError( 'Message not found' );
-    }
+    const updatedInquiry = await InquiryService.updateInquiry( { messageId: id, data: { status: INQUIRY_STATUS.RESOLVED } } );
 
     sendSuccessResponse( res, {
-        message: 'Message updated successfully',
-        data: updatedMessage
+        message: 'Inquiry solved successfully',
+        data: updatedInquiry
     } );
 };
 
@@ -101,16 +94,16 @@ exports.deleteInquiry = async ( req, res ) => {
     const { id } = req.params;
 
     if ( !id ) {
-        throw new ValidationError( 'Message ID is required' );
+        throw new ValidationError( 'Inquiry ID is required' );
     }
 
-    const deletedMessage = await InquiryService.deleteInquiry( id );
-    if ( !deletedMessage ) {
-        throw new NotFoundError( 'Message not found' );
+    const deletedInquiry = await InquiryService.deleteInquiry( id );
+    if ( !deletedInquiry ) {
+        throw new NotFoundError( 'Inquiry not found' );
     }
 
     sendSuccessResponse( res, {
-        message: 'Message deleted successfully',
-        data: deletedMessage
+        message: 'Inquiry deleted successfully',
+        data: deletedInquiry
     } );
 };

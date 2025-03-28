@@ -5,7 +5,7 @@ const {
     createInquiry,
     getInquiries,
     getInquiry,
-    updateInquiry,
+    replyToInquiry,
     deleteInquiry
 } = require('./inquiry.controller');
 const verifyAdmin = require('../../middlewares/verify.Admin.Middleware');
@@ -18,7 +18,7 @@ router.use(verifyAdmin);
 
 router.get('/get', asyncHandler(getInquiries));
 router.get('/get/:id', asyncHandler(getInquiry));
-router.put('/update/:id', asyncHandler(updateInquiry));
+router.post('/reply/:id', asyncHandler(replyToInquiry));
 router.delete('/delete/:id', asyncHandler(deleteInquiry));
 
 module.exports = router;

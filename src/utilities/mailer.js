@@ -1,25 +1,31 @@
-const { Transporter } = require( "../configs/mailer.config" );
-const env = require( "../configs/env.config" );
+const { Transporter } = require("../configs/mailer.config");
+const env = require("../configs/env.config");
 
-// Send the verification code via email
-exports.sendMail = ( USER, OTP ) => {
-	return new Promise( ( resolve, reject ) => {
-		Transporter.sendMail(
-			{
-				from: env.Mailer_Mail,
-				to: USER.email,
-				subject: "OTP Verification Code",
-				html: "<h1>" + OTP + "</h1>",
-			},
-			( err, data ) => {
-				if ( err ) {
-					reject( err );
-				} else {
-					console.log( "Mail sent successfully" );
-					( data.success = "Mail sent successfully" )
-					resolve( data );
-				}
-			}
-		);
-	} );
+/**
+ * Sends a verification email to the specified email address.
+ * @param {string} email - The recipient's email address.
+ * @param {string} subject - The subject of the email.
+ * @param {string} emailBody - The HTML content of the email.
+ * @returns {Promise} - A promise that resolves with the email sending result or rejects with an error.
+ */
+exports.sendMail = (email, subject, emailBody) => {
+    return new Promise((resolve, reject) => {
+        Transporter.sendMail(
+            {
+                from: env.Mailer_Mail,
+                to: email,
+                subject,
+                html: emailBody,
+            },
+            (err, result) => {
+                if (err) {
+                    // Reject the promise if there is an error
+                    reject(err);
+                } else {
+                    // Resolve the promise with the result
+                    resolve(result);
+                }
+            }
+        );
+    });
 };
