@@ -1,200 +1,137 @@
-const userModel = require( "../users/user.model" );
-const otpModel = require( "./otp.model" );
 const { generateOTP, isOTPExpired } = require( "../../utilities/auth" );
 const { sendMail } = require( "../../utilities/mailer" );
+const OTPService = require( './otp.service' );
+const UserService = require( "../user/user.service" );
+const { USER_STATUS, OTP_EXPIRATION_MS } = require( "../../utilities/constants" );
+const {
+	UnauthorizedError,
+	ValidationError,
+	NotFoundError
+} = require( "../../errors/customErrors" );
+const { sendSuccessResponse } = require( "../../utilities/responses" );
+
 
 /**
- * GET /send/:id
- * Send
+ * Validates user status
+ * @param {Object} user - User object
+ * @throws {UnauthorizedError} If user is blocked
  */
-exports.Send = async ( req, res ) => {
-	try {
-		const { id } = req.params; //params:userId
-		console.log( "🚀 ~ exports.Send= ~ id:", id )
-		const existingUser = await userModel.findById( id );
-		console.log( "🚀 ~ exports.Send= ~ existingUser:", existingUser )
-
-		if ( !existingUser ) {
-			return res
-				.status( 401 )
-				.json( { success: false, message: "User not found!" } );
-		}
-
-
-		if ( existingUser.status === "blocked" ) {
-			return res.status( 401 ).json( { success: false, message: "Admin Blocked" } );
-		}
-
-		const existingOTP = await otpModel
-			.find( { userId: existingUser._id } )
-			.sort( { createdAt: -1 } ) // Sort by createdAt in descending order
-			.limit( 1 ) // Get the latest OTP
-			.exec();
-		console.log( "🚀 ~ exports.Send= ~ existingOTP:", existingOTP );
-
-		if ( existingOTP[ 0 ] ) {
-			const isOtpExpired = isOTPExpired( existingOTP[ 0 ]?.updatedAt );
-			if ( !isOtpExpired )
-				return res.status( 202 ).json( {
-					success: true,
-					message: "OTP has already been sent.",
-					otpId: existingOTP[ 0 ]._id,
-				} );
-		}
-
-		const otp = await generateOTP();
-		const info = await sendMail(
-			existingUser.email,
-			"OTP Verification Code",
-			"<h1>" + OTP + "</h1>"
-		);
-		// Check if the email was successfully sent
-		if ( info.accepted[ 0 ] !== existingUser.email ) {
-			// If email sending fails, return 400 error
-			res.status( 400 ).json( { success: false, message: "Code sending failed!" } );
-		}
-
-		const newOTP = new otpModel( {
-			userId: existingUser._id,
-			otp: otp,
-		} );
-
-		await newOTP.save();
-
-		return res.status( 201 ).json( {
-			success: true,
-			message: "OTP is send successfully",
-			otpId: newOTP._id,
-		} );
-	} catch ( error ) {
-		// Log any errors that occur
-		console.error( error );
-		res.status( 401 ).send( { message: "Failed to send otp " } );
+const validateUserStatus = ( user ) => {
+	if ( user.status === USER_STATUS.BLOCKED ) {
+		throw new UnauthorizedError( 'Account is blocked by admin' );
 	}
 };
 
 /**
- * PUT
- * Resend
+ * Sends OTP email to user
+ * @param {string} email - Recipient email
+ * @param {string} otp - OTP code
+ * @throws {ValidationError} If email fails to send
  */
-exports.Resend = async ( req, res ) => {
+const sendOtpEmail = async ( email, otp ) => {
+	const info = await sendMail(
+		email,
+		'OTP Verification Code',
+		`<h1>${ otp }</h1>`
+	);
+
+	if ( info.accepted[ 0 ] !== email ) {
+		throw new ValidationError( 'Failed to send OTP email' );
+	}
+};
+
+/**
+ * @desc Send OTP to user
+ * @route GET /otp/send/:id
+ * @param {string} id - User ID
+ * @returns {Object} Contains OTP ID
+ */
+exports.send = async ( req, res ) => {
 	const { id } = req.params;
-	console.log( "🚀 ~ exports.Resend= ~ id:", id );
-	try {
-		const existingOTP = await otpModel.findById( id );
-		if ( !existingOTP ) {
-			return res
-				.status( 401 )
-				.json( { success: false, message: "OTP not found!" } );
-		}
+	if ( !id ) throw new ValidationError( 'User ID is required' );
 
-		const existingUser = await userModel.findById( existingOTP.userId );
+	const user = await UserService.findUser( { _id: id } );
+	if ( !user ) throw new NotFoundError( 'User not found' );
+	validateUserStatus( user );
 
-		if ( !existingUser ) {
-			return res
-				.status( 401 )
-				.json( { success: false, message: "User not found!" } );
-		}
+	const [ latestOTP ] = await OTPService.findLatestOTP( { userId: user._id } );
 
-
-
-		if ( existingUser.status === "blocked" ) {
-			return res.status( 401 ).json( { success: false, message: "Admin Blocked" } );
-		}
-
-		const newOtp = generateOTP();
-		const newData = new Date( Date.now() + 10 * 60 * 1000 );
-		const isOtpExpired = isOTPExpired( existingOTP.updatedAt );
-		let existedOTP;
-		if ( isOtpExpired ) {
-			const newOTP = new otpModel( {
-				userId: existingUser._id,
-				otp: newOtp,
-			} );
-
-			existedOTP = await newOTP.save();
-		} else {
-			// If OTP is still valid, generate a new one
-			existingOTP.otp = newOtp;
-			existingOTP.expireAt = newData;
-
-			// Save the updated OTP
-			existedOTP = await existingOTP.save();
-		}
-		// Send the verification code via email
-		const info = await sendMail( existingUser, newOtp );
-
-		// Check if the email was successfully sent
-		if ( info.accepted[ 0 ] !== existingUser.email ) {
-			// If email sending fails, return 400 error
-			res.status( 400 ).json( { success: false, message: "Code sending failed!" } );
-		}
-
-		return res.status( 201 ).json( {
-			success: true,
-			message: "Code send successfully",
-			otpId: existedOTP._id,
+	if ( latestOTP && !isOTPExpired( latestOTP.updatedAt ) ) {
+		return sendSuccessResponse( res, {
+			statusCode: 202,
+			message: 'OTP already sent',
+			data: { otpId: latestOTP._id }
 		} );
-	} catch ( error ) {
-		// Log any errors that occur
-		console.error( error );
-		res.status( 401 ).send( { message: "Failed to send code " } );
 	}
+
+	const otp = await generateOTP();
+	await sendOtpEmail( user.email, otp );
+
+	const newOTP = await OTPService.createOTP( user._id, otp );
+	sendSuccessResponse( res, {
+		statusCode: 201,
+		message: 'OTP sent successfully',
+		data: { otpId: newOTP._id }
+	} );
 };
 
 /**
- * POST /verify
- * Verify
+ * @desc Resend OTP to user
+ * @route PUT /otp/resend/:id
+ * @param {string} id - OTP ID
+ * @returns {Object} Contains new OTP ID
  */
-exports.Verify = async ( req, res ) => {
-	//params:otp_id
+exports.resend = async ( req, res ) => {
+	const { id } = req.params;
+	if ( !id ) throw new ValidationError( 'OTP ID is required' );
+
+	const existingOTP = await OTPService.findOTPById( id );
+	if ( !existingOTP ) throw new NotFoundError( 'OTP not found' );
+
+	const user = await UserService.findUser( { _id: existingOTP.userId } );
+	if ( !user ) throw new NotFoundError( 'User not found' );
+	validateUserStatus( user );
+
+	const newOtp = generateOTP();
+	const expirationDate = new Date( Date.now() + OTP_EXPIRATION_MS );
+
+	const updatedOTP = isOTPExpired( existingOTP.updatedAt )
+		? await OTPService.createOTP( user._id, newOtp )
+		: await OTPService.updateOTP( id, newOtp, expirationDate );
+
+	await sendOtpEmail( user.email, newOtp );
+
+	sendSuccessResponse( res, {
+		statusCode: 201,
+		message: 'OTP resent successfully',
+		data: { otpId: updatedOTP._id }
+	} );
+};
+
+/**
+ * @desc Verify OTP
+ * @route POST /otp/verify/:id
+ * @param {string} id - OTP ID
+ * @param {string} otp - OTP code to verify
+ * @returns {Object} Success message
+ */
+exports.verify = async ( req, res ) => {
 	const { id } = req.params;
 	const { otp } = req.body;
-	console.log( "🚀 ~ exports.Verify= ~ req.body:", req.body );
 
-	console.log( "🚀 ~ exports.Verify= ~ req.params:", req.params );
-	try {
-		const existingOTP = await otpModel.findById( id );
-		console.log( "🚀 ~ exports.Verify= ~ existingOTP:", existingOTP );
-		if ( !existingOTP ) {
-			return res
-				.status( 401 )
-				.json( { success: false, message: "OTP not exist!" } );
-		}
+	if ( !id ) throw new ValidationError( 'OTP ID is required' );
+	if ( !otp ) throw new ValidationError( 'OTP code is required' );
 
-		const existingUser = await userModel.findById( existingOTP.userId );
+	const existingOTP = await OTPService.findOTPById( id );
+	if ( !existingOTP ) throw new NotFoundError( 'OTP not found' );
 
+	const user = await UserService.findUser( { _id: existingOTP.userId } );
+	validateUserStatus( user );
 
-		if ( existingUser.status === "blocked" ) {
-			return res.status( 401 ).json( { success: false, message: "Admin Blocked" } );
-		}
-
-		console.log(
-			"🚀 ~ exports.Verify= ~ existingOTP.otp !== otp:",
-			existingOTP.otp !== otp
-		);
-		console.log(
-			"🚀 ~ exports.Verify= ~ existingOTP.otp:",
-			typeof existingOTP.otp
-		);
-		console.log( "🚀 ~ exports.Verify= ~ otp:", typeof otp );
-		if ( existingOTP.otp !== otp ) {
-			return res
-				.status( 401 )
-				.json( { success: false, message: "OTP not matched!" } );
-		}
-
-		( existingUser.status = "verified" )
-		await existingUser.save();
-
-		return res.status( 200 ).json( {
-			success: true,
-			message: "Authentication successful",
-			// token,
-		} );
-	} catch ( error ) {
-		// Log any errors that occur
-		console.error( error );
-		res.status( 401 ).send( { message: error.message } );
+	if ( existingOTP.otp !== otp ) {
+		throw new ValidationError( 'Invalid OTP code' );
 	}
+
+	await UserService.updateUser( user._id, { status: USER_STATUS.VERIFIED } );
+	sendSuccessResponse( res, { message: 'OTP verified successfully' } );
 };

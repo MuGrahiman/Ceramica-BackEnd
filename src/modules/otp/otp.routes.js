@@ -1,11 +1,12 @@
-const express = require("express");
+const express = require( "express" );
 const router = express.Router();
-const otpController = require("./otp.controller");
+const otpController = require( "./otp.controller" );
+const asyncHandler = require( "express-async-handler" );
 
 router
-	.route("/:id")
-	.get(otpController.Send)
-	.put(otpController.Resend)
-	.post(otpController.Verify);
-    
+	.route( "/:id" )
+	.get( asyncHandler( otpController.send ) )
+	.put( asyncHandler( otpController.resend ) )
+	.post( asyncHandler( otpController.verify ) );
+
 module.exports = router;

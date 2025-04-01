@@ -3,7 +3,7 @@ const express = require( "express" );
 // Import all routes
 const bookRoutes = require( "../modules/books/book.routes" );
 const otpRoutes = require( "../modules/otp/otp.routes" );
-const userRoutes = require( "../modules/users/user.routes" );
+const userRoutes = require( "../modules/user/user.routes" );
 const adminRoutes = require( "../modules/admin/admin.routes" );
 const inventoryRoutes = require( "../modules/inventory/inventory.routes" );
 const wishListRoutes = require( "../modules/wishList/wishList.routes" );

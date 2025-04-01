@@ -67,9 +67,18 @@ exports.ORDER_STATUSES = {
 exports.ORDER_STATUSES_ARRAY = Object.values( exports.ORDER_STATUSES );
 
 exports.INQUIRY_STATUS = {
-    PENDING: 'pending',   
-    RESOLVED: 'resolved', 
+    PENDING: 'pending',
+    RESOLVED: 'resolved',
 };
 
 
 exports.INQUIRY_STATUS_ARRAY = Object.values( exports.INQUIRY_STATUS );
+exports.USER_STATUS = {
+    REGISTERED: 'registered',
+    VERIFIED: 'verified',
+    BLOCKED: 'blocked'
+}
+
+//OTP Constants
+const OTP_EXPIRATION_MINUTES = 10;
+exports.OTP_EXPIRATION_MS = OTP_EXPIRATION_MINUTES * 60 * 1000;
