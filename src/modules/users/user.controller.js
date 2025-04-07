@@ -6,7 +6,8 @@ const {
 } = require( "../../utilities/auth" );
 const { sendMail } = require( "../../utilities/mailer" );
 const { providerSelector } = require( "../../utilities/providerSelector" );
-const userModel = require( "./user.model" );
+const userModel = {}
+// require( "./user.model" );
 const otpModel = require( "../otp/otp.model" );
 
 /**

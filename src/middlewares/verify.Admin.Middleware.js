@@ -2,7 +2,7 @@
 const { UnauthorizedError } = require( "../errors/customErrors" );
 
 const verifyAdmin = ( req, res, next ) => {
-    if ( req.user.role !== "admin" ) {
+    if ( req.user.roles !== "admin" ) {
         throw new UnauthorizedError( "Access Denied. Admin privileges required." );
     }
    return next();

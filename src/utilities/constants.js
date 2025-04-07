@@ -70,15 +70,24 @@ exports.INQUIRY_STATUS = {
     PENDING: 'pending',
     RESOLVED: 'resolved',
 };
-
-
 exports.INQUIRY_STATUS_ARRAY = Object.values( exports.INQUIRY_STATUS );
+
 exports.USER_STATUS = {
+    PENDING: 'pending',
     REGISTERED: 'registered',
     VERIFIED: 'verified',
     BLOCKED: 'blocked'
 }
+exports.USER_STATUS_ARRAY = Object.values( exports.USER_STATUS );
 
 //OTP Constants
 const OTP_EXPIRATION_MINUTES = 10;
 exports.OTP_EXPIRATION_MS = OTP_EXPIRATION_MINUTES * 60 * 1000;
+
+exports.SALT_ROUNDS = 12;
+
+exports.PROVIDER_FIELDS = {
+    local: "local",
+    google: "google",
+    facebook: "facebook",
+}

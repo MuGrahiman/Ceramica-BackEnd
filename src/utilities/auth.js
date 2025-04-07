@@ -1,4 +1,4 @@
-const { hash, compare } = require( "bcryptjs" );
+const { hash, compare, genSalt } = require( "bcryptjs" );
 const jwt = require( "jsonwebtoken" );
 const env = require( "../configs/env.config" );
 
@@ -18,11 +18,30 @@ exports.verifyJWToken = ( token ) => {
 	} );
 };
 
-// Function to hash a value
-exports.doHash = ( value, saltValue ) => hash( value, saltValue );
+
+/**
+ * Function to hash a value with bcryptjs.
+ * 
+ * @param {string} value - The input string to hash.
+ * @param {number} [saltValue=10] - Optional: The number of salt rounds (default is 10).
+ * @returns {Promise<string>} - The hashed value.
+ */
+exports.doHash = async ( value, saltValue = 10 ) => {
+	const salt = await genSalt( saltValue );
+	return hash( value, salt );
+}
 
 // Function to validate a value against a hashed value
-exports.doHashValidation = ( value, hashedValue ) => compare( value, hashedValue );
+exports.doHashValidation = ( value, hashedValue ) => {
+	console.log("🚀 ~ value, hashedValue:", value, hashedValue)
+	return compare( value, hashedValue );
+}
+
+
+// Function to validate OTP Expiry Date
+exports.isOTPExpired = ( otp ) => new Date() - new Date( otp ) > 5 * 60 * 1000;
+
+//TODO: Combine both code as one
 
 // Generate a random 4-digit verification code
 exports.generateOTP = () => {
@@ -30,11 +49,6 @@ exports.generateOTP = () => {
 	console.info( "otp:", otp )
 	return otp;
 };
-
-// Function to validate OTP Expiry Date
-exports.isOTPExpired = ( otp ) => new Date() - new Date( otp ) > 5 * 60 * 1000;
-
-
 
 /**
  * Generate a unique coupon code.

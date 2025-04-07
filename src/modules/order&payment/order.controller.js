@@ -193,7 +193,7 @@ exports.getOrderPaymentDetails = async ( req, res ) => {
  * @param {Object} res - Express response object
  */
 exports.getOrdersForAdmin = async ( req, res ) => {
-  const userRole = req.user.role;
+  const userRole = req.user.roles;
   if ( userRole !== USER_ROLES.ADMIN ) {
     throw new ForbiddenError( 'User is not allowed to change the status' );
   }

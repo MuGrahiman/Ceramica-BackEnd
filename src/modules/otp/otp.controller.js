@@ -17,7 +17,7 @@ const { sendSuccessResponse } = require( "../../utilities/responses" );
  * @throws {UnauthorizedError} If user is blocked
  */
 const validateUserStatus = ( user ) => {
-	if ( user.status === USER_STATUS.BLOCKED ) {
+	if ( user.isBlocked() ) {
 		throw new UnauthorizedError( 'Account is blocked by admin' );
 	}
 };
@@ -132,6 +132,13 @@ exports.verify = async ( req, res ) => {
 		throw new ValidationError( 'Invalid OTP code' );
 	}
 
-	await UserService.updateUser( user._id, { status: USER_STATUS.VERIFIED } );
+	const updatedUser = await UserService.updateUser( user._id, {
+		status: USER_STATUS.VERIFIED, otpVerified: true
+	} );
+	if ( !updatedUser ) {
+		throw new NotFoundError( 'User not found' );
+	}
+	await updatedUser.addActivityLog( 'OTP verification', 'User status successfully verified' );
+
 	sendSuccessResponse( res, { message: 'OTP verified successfully' } );
 };

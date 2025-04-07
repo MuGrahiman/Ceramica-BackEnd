@@ -1,6 +1,6 @@
 // middlewares/verifyToken.js
 const { verifyJWToken } = require( "../utilities/auth" );
-const userModel = require( "../modules/users/user.model" );
+const userModel = require( "../modules/user/user.model" );
 const { UnauthorizedError, NotFoundError } = require( "../errors/customErrors" );
 
 const verifyToken = async ( req, res, next ) => {

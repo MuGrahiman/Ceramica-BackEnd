@@ -1,22 +1,23 @@
-const User = require( "../users/user.model" );
-const { generateJWToken, doHashValidation } = require( "../../utilities/auth" );
+const User = require( "../user/user.model" );
+const { generateJWToken, doHashValidation, doHash } = require( "../../utilities/auth" );
 
 exports.Login = async ( req, res ) => {
 	try {
 		const { email, password } = req.body;
-
 		// Find the admin user by email
-		const admin = await User.findOne( { email: email } );
-
+		const admin = await User.findOne( { email } ).select( '+password' );
 		// Validate the admin user exists
-		if ( !admin || admin.role !== "admin" ) {
+		if ( !admin ) {
 			return res.status( 401 ).json( { message: "Invalid Credentials" } );
 		}
-
+		if ( admin.roles !== "admin" ) {
+			return res.status( 402 ).json( { message: "Invalid Credentials" } );
+		}
 		// Compare provided password with stored hashed password
+		// const isPasswordValid = await admin.isValidPassword( password )
 		const isPasswordValid = await doHashValidation( password, admin.password );
 		if ( !isPasswordValid ) {
-			return res.status( 401 ).json( { message: "Invalid Credentials" } );
+			return res.status( 403 ).json( { message: "Invalid Credentials" } );
 		}
 
 		// Generate JWT token with user id and role
@@ -36,25 +37,30 @@ exports.Login = async ( req, res ) => {
 
 exports.AddAdmin = async ( req, res ) => {
 	try {
-		const { email, password } = req.body;
-
+		const { email, password, firstName, lastName } = req.body;
+		// Validate required fields
+		if ( !email || !password || !firstName || !lastName ) {
+			throw new ValidationError( 'Registration fields are required' );
+		}
 		// Check if an admin user already exists
-		const existingAdmin = await User.findOne( { email: email } );
+		const existingAdmin = await User.findOne( { email } );
 		if ( existingAdmin ) {
 			return res.status( 400 ).json( { message: "Admin user already exists." } );
 		}
 
 		// Create a new admin user
-		const hashedPassword = await bcrypt.hash( password, 10 ); // Hashing the password
+		// const hashedPassword = await doHash( password, 10 ); // Hashing the password
 		const newAdmin = new User( {
-			email: email,
-			password: hashedPassword,
-			role: "admin"
+			firstName,
+			lastName,
+			email,
+			password,
+			otpVerified: true,
+			status: 'verified',
+			roles: "admin"
 		} );
-
 		// Save the new admin user to the database
 		await newAdmin.save();
-
 		return res.status( 201 ).json( { message: "Admin user created successfully." } );
 	} catch ( error ) {
 		console.error( "Failed to create admin user", error );
