@@ -1,7 +1,8 @@
 const { generateOTP, isOTPExpired } = require( "../../utilities/auth" );
 const { sendMail } = require( "../../utilities/mailer" );
 const OTPService = require( './otp.service' );
-const UserService = require( "../user/user.service" );
+const UserRepository = require( "../user/user.repository" );
+
 const { USER_STATUS, OTP_EXPIRATION_MS } = require( "../../utilities/constants" );
 const {
 	UnauthorizedError,
@@ -16,8 +17,8 @@ const { sendSuccessResponse } = require( "../../utilities/responses" );
  * @param {Object} user - User object
  * @throws {UnauthorizedError} If user is blocked
  */
-const validateUserStatus = ( user ) => {
-	if ( user.isBlocked() ) {
+const validateUserStatus = async ( user ) => {
+	if ( await UserRepository.isBlocked( user ) ) {
 		throw new UnauthorizedError( 'Account is blocked by admin' );
 	}
 };
@@ -50,7 +51,7 @@ exports.send = async ( req, res ) => {
 	const { id } = req.params;
 	if ( !id ) throw new ValidationError( 'User ID is required' );
 
-	const user = await UserService.findUser( { _id: id } );
+	const user = await UserRepository.findUser( { _id: id } );
 	if ( !user ) throw new NotFoundError( 'User not found' );
 	validateUserStatus( user );
 
@@ -88,7 +89,7 @@ exports.resend = async ( req, res ) => {
 	const existingOTP = await OTPService.findOTPById( id );
 	if ( !existingOTP ) throw new NotFoundError( 'OTP not found' );
 
-	const user = await UserService.findUser( { _id: existingOTP.userId } );
+	const user = await UserRepository.findUser( { _id: existingOTP.userId } );
 	if ( !user ) throw new NotFoundError( 'User not found' );
 	validateUserStatus( user );
 
@@ -125,20 +126,20 @@ exports.verify = async ( req, res ) => {
 	const existingOTP = await OTPService.findOTPById( id );
 	if ( !existingOTP ) throw new NotFoundError( 'OTP not found' );
 
-	const user = await UserService.findUser( { _id: existingOTP.userId } );
+	const user = await UserRepository.findUser( { _id: existingOTP.userId } );
 	validateUserStatus( user );
 
 	if ( existingOTP.otp !== otp ) {
 		throw new ValidationError( 'Invalid OTP code' );
 	}
 
-	const updatedUser = await UserService.updateUser( user._id, {
+	const updatedUser = await UserRepository.updateUser( user._id, {
 		status: USER_STATUS.VERIFIED, otpVerified: true
 	} );
 	if ( !updatedUser ) {
 		throw new NotFoundError( 'User not found' );
 	}
-	await updatedUser.addActivityLog( 'OTP verification', 'User status successfully verified' );
+	await UserRepository.addActivityLog( updatedUser, 'OTP verification', 'User status successfully verified' );
 
 	sendSuccessResponse( res, { message: 'OTP verified successfully' } );
 };
