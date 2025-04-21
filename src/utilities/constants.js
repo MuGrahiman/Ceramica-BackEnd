@@ -1,3 +1,4 @@
+const env = require( "../configs/env.config" );
 /**
  * Payment statuses used in the application.
  * @constant
@@ -91,3 +92,6 @@ exports.PROVIDER_FIELDS = {
     google: "google",
     facebook: "facebook",
 }
+
+exports.PASSWORD_RESET_LINK = `${ env.FrontEndBaseURL }/reset-password/`
+exports.REQUEST_PASSWORD_RESET_LINK = `${ env.FrontEndBaseURL }/verify-mail/`

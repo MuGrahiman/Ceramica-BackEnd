@@ -16,9 +16,9 @@ module.exports = ( err, req, res, next ) => {
 	let message = err.message || "Internal Server Error";
 
 	if ( err.name === "TokenExpiredError" ) {
-		const newError = new UnauthorizedError( "Token expired. Please log in again." );
+		const newError = new UnauthorizedError( "Token expired. " );
 		statusCode = newError.statusCode;
-		message = newError.message
+		message = newError.message + err.action
 	}
 
 	if ( err.name === "TimeoutError" ) {
@@ -40,7 +40,7 @@ module.exports = ( err, req, res, next ) => {
 
 	sendErrorResponse( res, {
 		statusCode,
-		message, 
-		errors: err, 
+		message,
+		errors: err,
 	} );
 };

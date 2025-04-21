@@ -11,9 +11,8 @@ const verifyToken = async ( req, res, next ) => {
     }
 
     try {
-        const data = await verifyJWToken( token );
+        const data = await verifyJWToken( token, 'Please Login again' );
         const user = await userModel.findById( data.id );
-
         if ( !user ) {
             return next( new UnauthorizedError( "User not found." ) );
         }

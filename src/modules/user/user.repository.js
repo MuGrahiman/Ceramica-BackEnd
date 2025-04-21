@@ -3,8 +3,8 @@
 const userModel = require( '../user/user.model' )
 
 class UserRepository {
-    async findUser ( query = {} ) {
-        return await userModel.findOne( query );
+    async findUser ( query = {}, select = '-password' ) {
+        return await userModel.findOne( query ).select( select );
     }
 
     async createUser ( userData ) {

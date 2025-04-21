@@ -3,14 +3,15 @@ const jwt = require( "jsonwebtoken" );
 const env = require( "../configs/env.config" );
 
 // Function to generate token
-exports.generateJWToken = ( value ) =>
-	jwt.sign( value, env.JWT_SECRET, { expiresIn: "1h" } );
+exports.generateJWToken = ( value, expiresIn = "1h" ) =>
+	jwt.sign( value, env.JWT_SECRET, { expiresIn } );
 
 // Function to verify token
-exports.verifyJWToken = ( token ) => {
+exports.verifyJWToken = ( token ,message) => {
 	return new Promise( ( resolve, reject ) => {
 		jwt.verify( token, env.JWT_SECRET, ( err, user ) => {
 			if ( err ) {
+				err.action = message; 
 				return reject( err );
 			}
 			resolve( user );
@@ -33,7 +34,6 @@ exports.doHash = async ( value, saltValue = 10 ) => {
 
 // Function to validate a value against a hashed value
 exports.doHashValidation = ( value, hashedValue ) => {
-	console.log("🚀 ~ value, hashedValue:", value, hashedValue)
 	return compare( value, hashedValue );
 }
 

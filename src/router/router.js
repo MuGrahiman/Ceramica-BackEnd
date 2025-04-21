@@ -18,8 +18,8 @@ const router = express.Router();
 // Define API routes
 router.use( "/books", bookRoutes );
 router.use( "/otp", otpRoutes );
-router.use( "/auth", userRoutes );
 router.use( "/admin", adminRoutes );
+router.use( "/auth", userRoutes );
 router.use( "/inventory", inventoryRoutes );
 router.use( '/wishlist', wishListRoutes );
 router.use( '/cart', cartRoutes );

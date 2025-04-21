@@ -9,13 +9,13 @@ const userSchema = new mongoose.Schema( {
     type: String,
     required: true,
     trim: true,
-    default: null,
+
   },
   lastName: {
     type: String,
     required: true,
     trim: true,
-    default: null,
+
   },
   email: {
     type: String,
@@ -28,12 +28,21 @@ const userSchema = new mongoose.Schema( {
   password: {
     type: String,
     required: true,
-    default: null,
     select: false,
   },
   profilePhoto: {
-    type: String,
-    default: "https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?t=st=1741285501~exp=1741289101~hmac=d629ec566545ef3b552d0a991e687ad2ed1aab9f352ae82b2df97cd3ad059148&w=740"
+    public_id: {
+      type: String,
+      default: null
+    },
+    url: {
+      type: String,
+      default: "https://img.freepik.com/free-vector/user-blue-gradient_78370-4692.jpg?t=st=1741285501~exp=1741289101~hmac=d629ec566545ef3b552d0a991e687ad2ed1aab9f352ae82b2df97cd3ad059148&w=740"
+    },
+    type: {
+      type: String,
+      default: null
+    },
   },
   status: {
     type: String,

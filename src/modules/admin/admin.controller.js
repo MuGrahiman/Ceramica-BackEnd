@@ -15,6 +15,7 @@ exports.Login = async ( req, res ) => {
 		}
 		// Compare provided password with stored hashed password
 		// const isPasswordValid = await admin.isValidPassword( password )
+		console.log("🚀 ~ exports.Login= ~ admin.password:", admin.password)
 		const isPasswordValid = await doHashValidation( password, admin.password );
 		if ( !isPasswordValid ) {
 			return res.status( 403 ).json( { message: "Invalid Credentials" } );

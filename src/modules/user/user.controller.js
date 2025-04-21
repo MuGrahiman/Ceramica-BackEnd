@@ -19,7 +19,15 @@ exports.login = async ( req, res ) => {
 };
 
 exports.forgotPassword = async ( req, res ) => {
-	const { userId } = await UserService.initiatePasswordReset( req.body.email );
+	const { userId } = await UserService.initiateResetPassword( req.body.email );
+	sendSuccessResponse( res, {
+		message: 'Password reset initiated',
+		data: { userId }
+	} );
+};
+
+exports.resetPassword = async ( req, res ) => {
+	const { userId } = await UserService.applyResetPassword( req.params.token, req.body);
 	sendSuccessResponse( res, {
 		message: 'Password reset initiated',
 		data: { userId }
@@ -49,6 +57,28 @@ exports.updateUserAccountStatus = async ( req, res ) => {
 	);
 	sendSuccessResponse( res, {
 		message: 'Status updated successfully',
+		data: updatedUser
+	} );
+};
+
+exports.updateUserAccount = async ( req, res ) => {
+	const updatedUser = await UserService.updateUser(
+		req.user._id,
+		req.body
+	);
+	sendSuccessResponse( res, {
+		message: 'Status updated successfully',
+		data: updatedUser
+	} );
+};
+
+exports.changePassword = async ( req, res ) => {
+	const updatedUser = await UserService.VerifyPassword(
+		req.user._id,
+		req.body
+	);
+	sendSuccessResponse( res, {
+		message: 'Password changed successfully',
 		data: updatedUser
 	} );
 };
