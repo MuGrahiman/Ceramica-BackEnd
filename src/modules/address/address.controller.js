@@ -69,13 +69,13 @@ exports.updateAddress = async ( req, res ) => {
 
 // Delete an address
 exports.deleteAddress = async ( req, res ) => {
-    const { id } = req.body;
+    const { addressId } = req.body;
 
-    if ( !id ) {
+    if ( !addressId ) {
         throw new ValidationError( 'Invalid address data' );
     }
 
-    const address = await AddressService.getAddressById( id );
+    const address = await AddressService.getAddressById( addressId );
     if ( !address ) {
         throw new NotFoundError( 'Address not found' );
     }
@@ -84,7 +84,7 @@ exports.deleteAddress = async ( req, res ) => {
         throw new ForbiddenError( 'Default address cannot be deleted' );
     }
 
-    const deletedAddress = await AddressService.deleteAddress( id );
+    const deletedAddress = await AddressService.deleteAddress( addressId );
     if ( !deletedAddress ) {
         throw new NotFoundError( 'Address not found' );
     }

@@ -1,17 +1,39 @@
 const { hash, compare, genSalt } = require( "bcryptjs" );
 const jwt = require( "jsonwebtoken" );
 const env = require( "../configs/env.config" );
+const { ValidationError } = require( "../errors/customErrors" );
+const mongoose = require( 'mongoose' );
 
+
+// Function to generate token
+exports.validateMongoId = ( mongoId, errorMessage = 'Invalid Id' ) => {
+	if ( !mongoose.Types.ObjectId.isValid( mongoId ) ) {
+		throw new ValidationError( errorMessage );
+	}
+}
+/**
+ * Converts a given  ID to a Mongoose ObjectId.
+ * 
+ * @param {string} Id - The ID of the  to convert.
+ * @returns {mongoose.Types.ObjectId} - The corresponding Mongoose ObjectId.
+ * @throws {Error} - Throws an error if the Id is not a valid string.
+ */
+exports.createObjectId = ( Id ) => {
+	if ( typeof Id !== 'string' ) {
+		throw new ValidationError( 'Invalid Id: must be a string' );
+	}
+	return new mongoose.Types.ObjectId( Id );
+}
 // Function to generate token
 exports.generateJWToken = ( value, expiresIn = "1h" ) =>
 	jwt.sign( value, env.JWT_SECRET, { expiresIn } );
 
 // Function to verify token
-exports.verifyJWToken = ( token ,message) => {
+exports.verifyJWToken = ( token, message ) => {
 	return new Promise( ( resolve, reject ) => {
 		jwt.verify( token, env.JWT_SECRET, ( err, user ) => {
 			if ( err ) {
-				err.action = message; 
+				err.action = message;
 				return reject( err );
 			}
 			resolve( user );

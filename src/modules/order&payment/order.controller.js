@@ -45,7 +45,7 @@ exports.createOrder = async ( req, res ) => {
       throw new NotFoundError( "Coupon not found" );
     }
 
-    const discountPercentage = coupon.discount; 
+    const discountPercentage = coupon.discount;
 
     const { adjustedItems, adjustedTotal } = applyDiscountToItems( items, discountPercentage );
 
@@ -148,6 +148,7 @@ exports.capturePayment = async ( req, res ) => {
     // Save the updated coupon
     await coupon.save();
   }
+  //TODO: existingOrder.status = 'processing'; await existingOrder.save();
 
   // Send success response
   sendSuccessResponse( res, {
@@ -197,7 +198,7 @@ exports.getOrdersForAdmin = async ( req, res ) => {
   if ( userRole !== USER_ROLES.ADMIN ) {
     throw new ForbiddenError( 'User is not allowed to change the status' );
   }
-  
+
   const orders = await OrderService.findOrdersByUser();
 
   // Send success response
@@ -242,7 +243,6 @@ exports.getOrderById = async ( req, res ) => {
   }
 
   const orders = await OrderService.findOrderById( orderId );
-
   // Send success response
   sendSuccessResponse( res, {
     message: 'Orders retrieved successfully',

@@ -64,4 +64,4 @@ exports.getWishlist = async ( req, res ) => {
         message: 'Wishlist retrieved successfully',
         data: wishlist,
     } );
-};
+}; 
