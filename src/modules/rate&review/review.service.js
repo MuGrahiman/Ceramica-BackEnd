@@ -69,6 +69,7 @@ class ReviewService {
         const reviews = await ReviewRepository.getProductReviews( productId );
         return { average, count: reviews.length };
     }
+
 }
 
 module.exports = ReviewService;

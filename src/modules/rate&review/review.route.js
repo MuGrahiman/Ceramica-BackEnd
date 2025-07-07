@@ -7,7 +7,7 @@ const {
     getProductReviews,
     updateReview,
     deleteReview,
-    getProductRatingStats
+    getProductRatingStats,
 } = require( './review.controller' );
 
 // Public routes

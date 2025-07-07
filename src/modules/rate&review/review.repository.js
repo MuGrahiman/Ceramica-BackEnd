@@ -40,6 +40,9 @@ class ReviewRepository {
         ] );
         return aggregateResult[ 0 ]?.average || 0;
     }
+
+
+    
 }
 
 module.exports = ReviewRepository;

@@ -16,19 +16,56 @@ class InventoryService {
         await newProduct.save();
         return newProduct;
     }
-
-    // Added fetchProducts method that includes filtering and sorting
     static async fetchProducts ( page, limit, filters = {}, sort = { createdAt: -1 }, search = {} ) {
         const skip = ( page - 1 ) * limit;
-        const filterOptions = { ...filters, ...search }
-        const products = await inventoryModel.find( filterOptions )
-            .sort( sort )
-            .skip( skip )
-            .limit( limit );
+        const filterOptions = { ...filters, ...search };
 
-        const count = await inventoryModel.countDocuments( filterOptions ); // Count filtered documents
+        const productsWithStats = await inventoryModel.aggregate( [
+            // Apply filters and search
+            { $match: filterOptions },
 
-        return { products, count };
+            // Sort
+            { $sort: sort },
+
+            // Pagination
+            { $skip: skip },
+            { $limit: limit },
+
+            // Lookup reviews
+            {
+                $lookup: {
+                    from: 'reviews', 
+                    localField: '_id',
+                    foreignField: 'productId',
+                    as: 'reviews'
+                }
+            },
+
+            // Add review stats
+            {
+                $addFields: {
+                    totalCount: { $size: '$reviews' },
+                    averageRating: {
+                        $cond: [
+                            { $gt: [ { $size: '$reviews' }, 0 ] },
+                            { $round: [ { $avg: '$reviews.rating' }, 2 ] },
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                  reviews: 0 
+                }
+              }
+              
+        ] );
+
+        // Get total count of matching products for pagination
+        const count = await inventoryModel.countDocuments( filterOptions );
+
+        return { products: productsWithStats, count };
     }
 
     static async getProductById ( id ) {
